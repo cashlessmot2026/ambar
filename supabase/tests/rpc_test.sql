@@ -148,7 +148,21 @@ begin
   begin perform place_order(tok2, jsonb_build_array(jsonb_build_object('product_id', p_ok, 'qty', 1)), null);
   exception when others then failed := sqlerrm = 'ordering_disabled'; end;
   if not failed then raise exception 'con pedidos desactivados debió dar ordering_disabled'; end if;
+  -- Guardar la página con una copia vieja (ordering=true) no debe reactivar los pedidos apagados
+  r := admin_save_settings(adm, (select data from settings where id = 1) || '{"ordering":{"enabled":true}}'::jsonb);
+  if (select (data->'ordering'->>'enabled')::boolean from settings where id = 1) <> false then
+    raise exception 'admin_save_settings reactivó los pedidos con una copia vieja';
+  end if;
   perform admin_set_ordering(adm, true);
+
+  -- Dos guardados seguidos de traducciones con datos en caché no deben pisarse
+  perform admin_upsert(adm, 'products', jsonb_build_object('id', p_ok, 'i18n', '{"de":{"name":"Produkt"}}'::jsonb));
+  perform admin_upsert(adm, 'products', jsonb_build_object('id', p_ok, 'i18n', '{"de":{"description":"Beschreibung"}}'::jsonb));
+  if (select i18n->'de'->>'name' from products where id = p_ok) is distinct from 'Produkt'
+     or (select i18n->'de'->>'description' from products where id = p_ok) is distinct from 'Beschreibung'
+     or (select i18n->'en'->>'name' from products where id = p_ok) is distinct from 'T product EN' then
+    raise exception 'admin_upsert perdió traducciones: %', (select i18n from products where id = p_ok);
+  end if;
   perform place_order(tok2, jsonb_build_array(jsonb_build_object('product_id', p_ok, 'qty', 1)), null);
   failed := false;
   begin perform admin_set_ordering('x', false); exception when others then failed := sqlerrm = 'unauthorized'; end;
