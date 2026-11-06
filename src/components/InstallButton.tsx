@@ -1,5 +1,6 @@
 import { motion } from 'motion/react'
 import { useEffect, useState } from 'react'
+import { useI18n } from '../i18n/I18n'
 import { Icon } from './Icon'
 
 interface BeforeInstallPromptEvent extends Event {
@@ -8,6 +9,7 @@ interface BeforeInstallPromptEvent extends Event {
 }
 
 export function InstallButton() {
+  const { t } = useI18n()
   const [evt, setEvt] = useState<BeforeInstallPromptEvent | null>(null)
   useEffect(() => {
     const handler = (e: Event) => {
@@ -29,7 +31,7 @@ export function InstallButton() {
         setEvt(null)
       }}
     >
-      <Icon name="install" /> Instalar app
+      <Icon name="install" /> {t('install.button')}
     </motion.button>
   )
 }

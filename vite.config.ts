@@ -11,6 +11,7 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['logo.png', 'favicon.png', 'icons/apple-touch-icon.png'],
       manifest: {
+        id: './',
         name: 'Ámbar Steak House',
         short_name: 'Ámbar',
         description: 'Menú digital, pedidos y tarjeta de fidelización de Ámbar Steak House',
@@ -18,17 +19,34 @@ export default defineConfig({
         theme_color: '#0E0E10',
         background_color: '#0E0E10',
         display: 'standalone',
-        orientation: 'portrait',
+        display_override: ['standalone', 'minimal-ui'],
+        orientation: 'any',
+        categories: ['food', 'lifestyle'],
         start_url: './',
         scope: './',
         icons: [
           { src: 'icons/icon-192.png', sizes: '192x192', type: 'image/png' },
           { src: 'icons/icon-512.png', sizes: '512x512', type: 'image/png' },
           { src: 'icons/maskable-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
+          { src: 'icons/monochrome-512.png', sizes: '512x512', type: 'image/png', purpose: 'monochrome' },
+        ],
+        // Accesos directos al mantener presionado el ícono (Android) o clic derecho (escritorio).
+        shortcuts: [
+          { name: 'Menú', short_name: 'Menú', url: './#/menu', icons: [{ src: 'icons/shortcut-menu.png', sizes: '96x96', type: 'image/png' }] },
+          { name: 'Pedido', short_name: 'Pedido', url: './#/pedido', icons: [{ src: 'icons/shortcut-pedido.png', sizes: '96x96', type: 'image/png' }] },
+          { name: 'Tarjeta Ámbar', short_name: 'Tarjeta', url: './#/tarjeta', icons: [{ src: 'icons/shortcut-tarjeta.png', sizes: '96x96', type: 'image/png' }] },
+        ],
+        // Ficha de instalación enriquecida en Android/Chrome.
+        screenshots: [
+          { src: 'screenshots/home-narrow.png', sizes: '390x844', type: 'image/png', form_factor: 'narrow', label: 'Inicio de Ámbar Steak House' },
+          { src: 'screenshots/menu-narrow.png', sizes: '390x844', type: 'image/png', form_factor: 'narrow', label: 'Menú digital' },
+          { src: 'screenshots/home-wide.png', sizes: '1280x800', type: 'image/png', form_factor: 'wide', label: 'Ámbar en tablet y escritorio' },
         ],
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,png,webp,svg,woff2}'],
+        // Las pantallas de arranque y capturas solo las usa el sistema al instalar; no se precargan.
+        globIgnores: ['splash/**', 'screenshots/**'],
         maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
         runtimeCaching: [
           {

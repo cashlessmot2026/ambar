@@ -4,8 +4,10 @@ import { Link } from 'react-router-dom'
 import { Icon, type IconName } from '../components/Icon'
 import { ImageViewer } from '../components/ImageViewer'
 import { InstallButton } from '../components/InstallButton'
+import { LangPicker } from '../components/LangPicker'
 import { PlaceholderArt } from '../components/PlaceholderArt'
 import { useAppData } from '../context/AppData'
+import { localized, settingText, useI18n } from '../i18n/I18n'
 import { formatCOP, mediaUrl } from '../lib/format'
 import type { Product } from '../lib/types'
 
@@ -16,6 +18,7 @@ const fadeUp = {
 
 export default function Home() {
   const { data, loading } = useAppData()
+  const { t, lang } = useI18n()
   const [open, setOpen] = useState<string | null>(null)
 
   const featured = useMemo<Product[]>(
@@ -23,14 +26,16 @@ export default function Home() {
     [data],
   )
 
-  if (!data) return loading ? <div className="spinner" /> : <div className="empty">No pudimos cargar la información. Revisa tu conexión.</div>
-  const { business, contact, landing } = data.settings
+  if (!data) return loading ? <div className="spinner" /> : <div className="empty">{t('common.loadError')}</div>
+  const s = data.settings
+  const { business, contact, landing } = s
+  const txt = (section: 'landing' | 'business', field: string) => settingText(s, lang, section, field)
 
   const info: { icon: IconName; label: string; value: string; href?: string }[] = [
-    { icon: 'chef', label: 'Chef', value: business.chef, href: business.chef_url },
-    { icon: 'pin', label: 'Ubicación', value: business.location, href: contact.maps_url },
-    { icon: 'music', label: 'Música', value: business.music, href: business.music_url },
-    { icon: 'instagram', label: 'Instagram', value: '@' + contact.instagram_url.split('/').filter(Boolean).pop()!.split('?')[0], href: contact.instagram_url },
+    { icon: 'chef', label: t('home.chef'), value: business.chef, href: business.chef_url },
+    { icon: 'pin', label: t('home.location'), value: txt('business', 'location'), href: contact.maps_url },
+    { icon: 'music', label: t('home.music'), value: business.music, href: business.music_url },
+    { icon: 'instagram', label: t('home.instagram'), value: '@' + contact.instagram_url.split('/').filter(Boolean).pop()!.split('?')[0], href: contact.instagram_url },
   ]
 
   return (
@@ -41,6 +46,9 @@ export default function Home() {
         ) : (
           <img className="hero-fallback" src={mediaUrl(landing.images[0])} alt="" />
         )}
+        <div className="hero-top">
+          <LangPicker />
+        </div>
         <div className="hero-content">
           <motion.img
             className="hero-logo"
@@ -50,18 +58,18 @@ export default function Home() {
             animate={{ opacity: 1, scale: 1, y: 0 }}
             transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
           />
-          <motion.h1 variants={fadeUp} initial="hidden" animate="show" custom={1}>
-            {landing.headline}
+          <motion.h1 key={`h-${lang}`} variants={fadeUp} initial="hidden" animate="show" custom={1}>
+            {txt('landing', 'headline')}
           </motion.h1>
-          <motion.p variants={fadeUp} initial="hidden" animate="show" custom={2}>
-            {landing.subheadline}
+          <motion.p key={`p-${lang}`} variants={fadeUp} initial="hidden" animate="show" custom={2}>
+            {txt('landing', 'subheadline')}
           </motion.p>
           <motion.div className="hero-actions" variants={fadeUp} initial="hidden" animate="show" custom={3}>
             <motion.div whileTap={{ scale: 0.95 }} whileHover={{ scale: 1.05 }}>
-              <Link to="/menu" className="btn solid"><Icon name="menu" /> Ver menú</Link>
+              <Link to="/menu" className="btn solid"><Icon name="menu" /> {t('home.viewMenu')}</Link>
             </motion.div>
             <motion.a whileTap={{ scale: 0.95 }} whileHover={{ scale: 1.05 }} className="btn" href={contact.instagram_url} target="_blank" rel="noreferrer">
-              <Icon name="instagram" /> Instagram
+              <Icon name="instagram" /> {t('home.instagram')}
             </motion.a>
             <InstallButton />
           </motion.div>
@@ -72,16 +80,16 @@ export default function Home() {
         <motion.div className="section award" variants={fadeUp} initial="hidden" whileInView="show" viewport={{ once: true }}>
           <span className="trophy">🏆</span>
           <div>
-            <small className="gold upper" style={{ fontSize: 11, fontWeight: 700 }}>🥇 Ganadores</small>
-            <h3>{business.award}</h3>
-            <span className="muted" style={{ fontSize: 13 }}>Prueba la Barkhu, la burger campeona de la isla.</span>
+            <small className="gold upper" style={{ fontSize: 11, fontWeight: 700 }}>🥇 {t('home.winners')}</small>
+            <h3>{txt('business', 'award')}</h3>
+            <span className="muted" style={{ fontSize: 13 }}>{t('home.awardText')}</span>
           </div>
         </motion.div>
 
         <div className="section info-grid">
           {info.map((it, i) => (
             <motion.a
-              key={it.label}
+              key={it.icon}
               className="info"
               href={it.href}
               target="_blank"
@@ -104,31 +112,34 @@ export default function Home() {
         {featured.length > 0 && (
           <section className="section">
             <div className="section-title">
-              <h2>Platos destacados</h2>
-              <Link to="/menu">Ver todo</Link>
+              <h2>{t('home.featured')}</h2>
+              <Link to="/menu">{t('home.seeAll')}</Link>
             </div>
             <div className="hscroll">
-              {featured.map((p) => (
-                <motion.div key={p.id} className="card feature-card" whileHover={{ y: -4 }} whileTap={{ scale: 0.98 }}>
-                  <Link to={`/menu?p=${p.id}`}>
-                    <div className="ph">
-                      {p.images[0] ? <img src={mediaUrl(p.images[0])} alt={p.name} loading="lazy" /> : <PlaceholderArt />}
-                    </div>
-                    <div className="body">
-                      <h3>{p.name}</h3>
-                      <span className="gold" style={{ fontWeight: 700 }}>{formatCOP(p.price)}</span>
-                    </div>
-                  </Link>
-                </motion.div>
-              ))}
+              {featured.map((p) => {
+                const name = localized(p, 'name', lang)
+                return (
+                  <motion.div key={p.id} className="card feature-card" whileHover={{ y: -4 }} whileTap={{ scale: 0.98 }}>
+                    <Link to={`/menu?p=${p.id}`}>
+                      <div className="ph">
+                        {p.images[0] ? <img src={mediaUrl(p.images[0])} alt={name} loading="lazy" /> : <PlaceholderArt />}
+                      </div>
+                      <div className="body">
+                        <h3>{name}</h3>
+                        <span className="gold" style={{ fontWeight: 700 }}>{formatCOP(p.price)}</span>
+                      </div>
+                    </Link>
+                  </motion.div>
+                )
+              })}
             </div>
           </section>
         )}
 
         <section className="section">
           <div className="section-title">
-            <h2>Galería</h2>
-            <span className="muted" style={{ fontSize: 12 }}>Toca para ampliar</span>
+            <h2>{t('home.gallery')}</h2>
+            <span className="muted" style={{ fontSize: 12 }}>{t('home.tapToZoom')}</span>
           </div>
           <div className="hscroll">
             {landing.images.map((src, i) => (
@@ -138,7 +149,7 @@ export default function Home() {
                 onClick={() => setOpen(src)}
                 whileHover={{ scale: 1.03 }}
                 whileTap={{ scale: 0.97 }}
-                aria-label={`Abrir foto ${i + 1}`}
+                aria-label={t('home.openPhoto', { n: i + 1 })}
               >
                 <motion.img layoutId={`gallery-${src}`} src={mediaUrl(src)} alt="" loading="lazy" />
               </motion.button>
@@ -150,17 +161,17 @@ export default function Home() {
           <Link to="/tarjeta" className="promo">
             <span className="info ico" style={{ border: 0, padding: 0, width: 52, height: 52 }}><Icon name="star" filled /></span>
             <div style={{ flex: 1 }}>
-              <h3>Tarjeta Ámbar</h3>
-              <span className="muted" style={{ fontSize: 13 }}>Gana una estrella por cada visita y reclama premios.</span>
+              <h3>{t('home.cardTitle')}</h3>
+              <span className="muted" style={{ fontSize: 13 }}>{t('home.cardText')}</span>
             </div>
-            <Icon name="arrowRight" style={{ width: 22, height: 22, color: 'var(--gold)' }} />
+            <Icon name="arrowRight" className="flip-rtl" style={{ width: 22, height: 22, color: 'var(--gold)' }} />
           </Link>
         </motion.div>
 
         <footer className="footer">
-          {business.name} · {business.location}
+          {business.name} · {txt('business', 'location')}
           <br />
-          <Link to="/privacidad">Política de tratamiento de datos</Link>
+          <Link to="/privacidad">{t('home.privacy')}</Link>
         </footer>
       </div>
 
@@ -168,7 +179,7 @@ export default function Home() {
         open={open !== null}
         images={open ? [open] : []}
         layoutId={`gallery-${open}`}
-        alt="Foto de Ámbar"
+        alt={business.name}
         onClose={() => setOpen(null)}
       />
     </>

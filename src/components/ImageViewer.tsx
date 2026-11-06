@@ -1,5 +1,6 @@
 import { AnimatePresence, motion } from 'motion/react'
 import { useEffect, useState } from 'react'
+import { useI18n } from '../i18n/I18n'
 import { mediaUrl } from '../lib/format'
 import { Icon } from './Icon'
 
@@ -7,24 +8,27 @@ import { Icon } from './Icon'
 export function ImageViewer({
   open, images, layoutId, alt, onClose,
 }: { open: boolean; images: string[]; layoutId: string; alt: string; onClose: () => void }) {
+  const { t, dir } = useI18n()
   const [index, setIndex] = useState(0)
   useEffect(() => { if (open) setIndex(0) }, [open])
   useEffect(() => {
     if (!open) return
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose()
-      if (e.key === 'ArrowRight') setIndex((i) => Math.min(images.length - 1, i + 1))
-      if (e.key === 'ArrowLeft') setIndex((i) => Math.max(0, i - 1))
+      const next = dir === 'rtl' ? 'ArrowLeft' : 'ArrowRight'
+      const prev = dir === 'rtl' ? 'ArrowRight' : 'ArrowLeft'
+      if (e.key === next) setIndex((i) => Math.min(images.length - 1, i + 1))
+      if (e.key === prev) setIndex((i) => Math.max(0, i - 1))
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [open, images.length, onClose])
+  }, [open, images.length, onClose, dir])
 
   return (
     <AnimatePresence>
       {open && images.length > 0 && (
         <motion.div className="viewer-backdrop" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={onClose}>
-          <button className="icon-btn viewer-close" onClick={onClose} aria-label="Cerrar">
+          <button className="icon-btn viewer-close" onClick={onClose} aria-label={t('common.close')}>
             <Icon name="x" />
           </button>
           <motion.img
@@ -36,8 +40,9 @@ export function ImageViewer({
             drag={images.length > 1 ? 'x' : false}
             dragSnapToOrigin
             onDragEnd={(_, info) => {
-              if (info.offset.x < -60) setIndex((i) => Math.min(images.length - 1, i + 1))
-              if (info.offset.x > 60) setIndex((i) => Math.max(0, i - 1))
+              const dx = dir === 'rtl' ? -info.offset.x : info.offset.x
+              if (dx < -60) setIndex((i) => Math.min(images.length - 1, i + 1))
+              if (dx > 60) setIndex((i) => Math.max(0, i - 1))
             }}
             onClick={(e) => e.stopPropagation()}
           />

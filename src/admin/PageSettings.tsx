@@ -5,13 +5,36 @@ import { applyTheme, FONT_OPTIONS } from '../context/Theme'
 import { api, errorMessage } from '../lib/api'
 import type { Settings } from '../lib/types'
 import { ImageListEditor } from './ImageListEditor'
+import { LangTabs } from './LangTabs'
 import { useAdmin } from './useAdmin'
+import type { Lang } from '../i18n/I18n'
 
 const COLOR_LABELS: Record<keyof Settings['theme']['colors'], string> = {
   bg: 'Fondo', surface: 'Tarjetas', border: 'Bordes', gold: 'Dorado (principal)', amber: 'Ámbar (acento)', text: 'Texto', muted: 'Texto secundario',
 }
 const DEFAULT_COLORS: Settings['theme']['colors'] = {
   bg: '#0E0E10', surface: '#18181B', border: '#2A2A2E', gold: '#D4A24C', amber: '#F08A24', text: '#F5F5F4', muted: '#A1A1AA',
+}
+
+type TrSection = 'landing' | 'business'
+const TR_FIELDS: [TrSection, string, string][] = [
+  ['landing', 'headline', 'Título de portada'],
+  ['landing', 'subheadline', 'Subtítulo de portada'],
+  ['business', 'tagline', 'Eslogan'],
+  ['business', 'location', 'Ubicación'],
+  ['business', 'award', 'Reconocimiento'],
+]
+
+function trText(s: Settings, lang: Lang, section: TrSection, field: string): string {
+  return (s.i18n?.[lang]?.[section] as Record<string, string> | undefined)?.[field] ?? ''
+}
+
+function setTrText(s: Settings, lang: Lang, section: TrSection, field: string, value: string): Settings {
+  const i18n = { ...(s.i18n ?? {}) }
+  const forLang = { ...(i18n[lang] ?? {}) }
+  forLang[section] = { ...(forLang[section] ?? {}), [field]: value }
+  i18n[lang] = forLang
+  return { ...s, i18n }
 }
 
 export default function PageSettings() {
@@ -21,6 +44,7 @@ export default function PageSettings() {
   const [busy, setBusy] = useState(false)
   const [msg, setMsg] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [trLang, setTrLang] = useState<Lang>('en')
 
   useEffect(() => { if (data && !s) setS(structuredClone(data.settings)) }, [data, s])
   // Vista previa en vivo de colores y fuentes.
@@ -113,6 +137,30 @@ export default function PageSettings() {
         <div className="field">
           <label>Galería</label>
           <ImageListEditor max={24} value={s.landing.images} onChange={(v) => set('landing', 'images', v)} />
+        </div>
+      </section>
+
+      <section className="card panel">
+        <h2>Traducciones de textos</h2>
+        <p className="muted" style={{ fontSize: 13, marginTop: -6 }}>Lo que escribas aquí ven los clientes que usan la app en ese idioma. Vacío = se muestra en español.</p>
+        <LangTabs
+          lang={trLang}
+          onChange={(l) => setTrLang(l === 'es' ? 'en' : l)}
+          missing={(l) => TR_FIELDS.some(([sec, f]) => !!String((s[sec] as unknown as Record<string, unknown>)[f] ?? '').trim() && !trText(s, l, sec, f).trim())}
+        />
+        <div className="form-grid" style={{ marginTop: 12 }}>
+          {TR_FIELDS.map(([sec, f, label]) => (
+            <div className="field" key={sec + f}>
+              <label>{label} ({trLang.toUpperCase()})</label>
+              <input
+                className="input"
+                dir={trLang === 'ar' ? 'rtl' : 'ltr'}
+                placeholder={String((s[sec] as unknown as Record<string, unknown>)[f] ?? '')}
+                value={trText(s, trLang, sec, f)}
+                onChange={(e) => setS(setTrText(s, trLang, sec, f, e.target.value))}
+              />
+            </div>
+          ))}
         </div>
       </section>
 

@@ -1,4 +1,8 @@
+/** Traducciones por idioma: { en: { name: '…', description: '…' } }. */
+export type I18nMap = Partial<Record<'es' | 'en' | 'de' | 'ru' | 'pt' | 'it' | 'fr' | 'zh' | 'ko' | 'ar', Record<string, string | undefined>>>
+
 export interface Product {
+  i18n?: I18nMap
   id: string
   name: string
   description: string | null
@@ -11,6 +15,7 @@ export interface Product {
 }
 
 export interface Category {
+  i18n?: I18nMap
   id: string
   name: string
   image: string | null
@@ -20,6 +25,7 @@ export interface Category {
 }
 
 export interface Menu {
+  i18n?: I18nMap
   id: string
   slug: string
   name: string
@@ -32,6 +38,7 @@ export interface Menu {
 }
 
 export interface Reward {
+  i18n?: I18nMap
   id: string
   name: string
   description: string | null
@@ -64,6 +71,10 @@ export interface Settings {
     fonts: { heading: string; body: string }
   }
   landing: { headline: string; subheadline: string; video: string; images: string[] }
+  /** Textos del negocio y del landing traducidos: { en: { landing: { headline }, business: { tagline } } } */
+  i18n?: Partial<Record<string, { landing?: Partial<Record<'headline' | 'subheadline', string>>; business?: Partial<Record<'tagline' | 'location' | 'award', string>> }>>
+  /** Pedidos por la app; ausente = activo. */
+  ordering?: { enabled: boolean }
 }
 
 export interface PublicData {

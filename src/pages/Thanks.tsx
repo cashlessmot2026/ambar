@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom'
 import { Icon } from '../components/Icon'
 import { TopBar } from '../components/TopBar'
 import { useAppData } from '../context/AppData'
+import { useI18n } from '../i18n/I18n'
 import { fireworks } from '../lib/celebrate'
 import { formatCOP } from '../lib/format'
 import type { OrderSummary } from '../lib/types'
@@ -20,10 +21,16 @@ function readLast(): { order: OrderSummary; url: string } | null {
 
 export default function Thanks() {
   const { data } = useAppData()
+  const { t } = useI18n()
   const last = readLast()
   useEffect(() => { if (last) fireworks(1200) }, [])
 
   const contact = data?.settings.contact
+  const reviews = [
+    { href: contact?.google_review_url, title: t('thanks.google'), sub: t('thanks.googleSub'), logo: <GoogleLogo />, style: undefined },
+    { href: contact?.tripadvisor_url, title: t('thanks.trip'), sub: t('thanks.tripSub'), logo: <Icon name="owl" />, style: { background: '#34E0A1', color: '#000' } },
+    { href: contact?.instagram_url, title: t('thanks.ig'), sub: t('thanks.igSub'), logo: <Icon name="instagram" />, style: { background: 'linear-gradient(45deg,#f9ce34,#ee2a7b,#6228d7)', color: '#fff' } },
+  ]
   return (
     <>
       <TopBar />
@@ -35,53 +42,50 @@ export default function Thanks() {
           transition={{ type: 'spring', stiffness: 260, damping: 18 }}
         >
           <div style={{ fontSize: 56 }}>🥩</div>
-          <h1 style={{ fontSize: 24, textTransform: 'uppercase' }}>¡Pedido recibido!</h1>
+          <h1 style={{ fontSize: 24 }} className="upper">{t('thanks.title')}</h1>
           {last && (
             <p className="muted">
-              Pedido <strong className="gold">#{last.order.number}</strong> por <strong className="gold">{formatCOP(last.order.total)}</strong>.
-              <br />Si WhatsApp no se abrió, envíalo con el botón.
+              <strong className="gold">{t('thanks.summary', { n: last.order.number, total: formatCOP(last.order.total) })}</strong>
+              <br />{t('thanks.noWhatsapp')}
             </p>
           )}
         </motion.div>
 
         {last && (
           <motion.a className="btn solid block" style={{ height: 54 }} href={last.url} target="_blank" rel="noreferrer" whileTap={{ scale: 0.96 }}>
-            <Icon name="whatsapp" /> Enviar por WhatsApp
+            <Icon name="whatsapp" /> {t('thanks.sendWhatsapp')}
           </motion.a>
         )}
 
         <section className="section">
-          <div className="section-title"><h2>¿Cómo te fue?</h2></div>
-          <p className="muted" style={{ marginTop: -6, fontSize: 14 }}>Tu reseña nos ayuda muchísimo. ¡Gracias por elegirnos!</p>
+          <div className="section-title"><h2>{t('thanks.howWasIt')}</h2></div>
+          <p className="muted" style={{ marginTop: -6, fontSize: 14 }}>{t('thanks.reviewHelp')}</p>
           <div className="review-btns">
-            <motion.a className="review-btn" href={contact?.google_review_url} target="_blank" rel="noreferrer" whileHover={{ y: -3 }} whileTap={{ scale: 0.97 }} initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.2 }}>
-              <span className="logo"><GoogleLogo /></span>
-              <span style={{ flex: 1 }}>
-                <strong>Reseña en Google</strong>
-                <span className="muted" style={{ fontSize: 13 }}>Califícanos con ⭐⭐⭐⭐⭐</span>
-              </span>
-              <Icon name="arrowRight" style={{ width: 20, color: 'var(--gold)' }} />
-            </motion.a>
-            <motion.a className="review-btn" href={contact?.tripadvisor_url} target="_blank" rel="noreferrer" whileHover={{ y: -3 }} whileTap={{ scale: 0.97 }} initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.32 }}>
-              <span className="logo" style={{ background: '#34E0A1', color: '#000' }}><Icon name="owl" /></span>
-              <span style={{ flex: 1 }}>
-                <strong>Reseña en Tripadvisor</strong>
-                <span className="muted" style={{ fontSize: 13 }}>Cuéntale al mundo tu experiencia</span>
-              </span>
-              <Icon name="arrowRight" style={{ width: 20, color: 'var(--gold)' }} />
-            </motion.a>
-            <motion.a className="review-btn" href={contact?.instagram_url} target="_blank" rel="noreferrer" whileHover={{ y: -3 }} whileTap={{ scale: 0.97 }} initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.44 }}>
-              <span className="logo" style={{ background: 'linear-gradient(45deg,#f9ce34,#ee2a7b,#6228d7)', color: '#fff' }}><Icon name="instagram" /></span>
-              <span style={{ flex: 1 }}>
-                <strong>Síguenos en Instagram</strong>
-                <span className="muted" style={{ fontSize: 13 }}>Etiquétanos en tus fotos</span>
-              </span>
-              <Icon name="arrowRight" style={{ width: 20, color: 'var(--gold)' }} />
-            </motion.a>
+            {reviews.map((r, i) => (
+              <motion.a
+                key={r.title}
+                className="review-btn"
+                href={r.href}
+                target="_blank"
+                rel="noreferrer"
+                whileHover={{ y: -3 }}
+                whileTap={{ scale: 0.97 }}
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2 + i * 0.12 }}
+              >
+                <span className="logo" style={r.style}>{r.logo}</span>
+                <span style={{ flex: 1 }}>
+                  <strong>{r.title}</strong>
+                  <span className="muted" style={{ fontSize: 13 }}>{r.sub}</span>
+                </span>
+                <Icon name="arrowRight" className="flip-rtl" style={{ width: 20, color: 'var(--gold)' }} />
+              </motion.a>
+            ))}
           </div>
         </section>
 
-        <Link to="/tarjeta" className="btn block" style={{ marginTop: 22 }}><Icon name="star" /> Ver mi Tarjeta Ámbar</Link>
+        <Link to="/tarjeta" className="btn block" style={{ marginTop: 22 }}><Icon name="star" /> {t('thanks.viewCard')}</Link>
       </div>
     </>
   )
