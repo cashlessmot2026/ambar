@@ -1,0 +1,11 @@
+node_modules
+dist
+.env
+.env.*
+*.pdf
+*.local
+.DS_Store
+.superpowers
+landing page/
+diseño de app web.png
+.playwright-mcp/

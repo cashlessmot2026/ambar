@@ -1,0 +1,70 @@
+/* ───────── Menú ───────── */
+.menu-head { position: sticky; top: 66px; z-index: 20; background: var(--bg); padding: 12px 0 10px; }
+.tabs { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 4px; padding: 4px; background: var(--surface); border: 1px solid var(--border); border-radius: 999px; }
+.tabs button { position: relative; height: 42px; border-radius: 999px; font-family: var(--font-heading); font-weight: 700; font-size: 13px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); }
+.tabs button.on { color: #141414; }
+.tabs .tab-bg { position: absolute; inset: 0; border-radius: 999px; background: var(--gold); z-index: 0; }
+.tabs button span { position: relative; z-index: 1; display: inline-flex; align-items: center; gap: 6px; }
+.now-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--ok); box-shadow: 0 0 0 3px color-mix(in srgb, var(--ok) 30%, transparent); }
+.menu-sub { text-align: center; font-size: 12px; color: var(--muted); margin-top: 8px; }
+.search { position: relative; margin-top: 10px; }
+.search svg { position: absolute; right: 16px; top: 50%; transform: translateY(-50%); width: 18px; height: 18px; color: var(--muted); }
+.search .input { width: 100%; border-radius: 999px; padding-right: 44px; }
+.chips { display: flex; gap: 10px; overflow-x: auto; padding: 12px 0 2px; scrollbar-width: none; }
+.chips::-webkit-scrollbar { display: none; }
+.chip { flex-shrink: 0; display: flex; flex-direction: column; align-items: center; gap: 6px; width: 72px; font-size: 11px; font-weight: 600; color: var(--muted); text-align: center; line-height: 1.2; }
+.chip .circle { width: 58px; height: 58px; border-radius: 50%; display: grid; place-items: center; font-size: 26px; border: 1.5px solid var(--gold); background: var(--surface); overflow: hidden; }
+.chip .circle img { width: 100%; height: 100%; object-fit: cover; }
+.chip.on { color: var(--gold); }
+.chip.on .circle { background: color-mix(in srgb, var(--gold) 18%, var(--surface)); box-shadow: 0 0 0 3px color-mix(in srgb, var(--gold) 25%, transparent); }
+.cat-title { display: flex; align-items: center; gap: 10px; margin: 26px 0 12px; scroll-margin-top: 260px; }
+.cat-title h2 { font-size: 18px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; }
+.cat-title::after { content: ""; flex: 1; height: 1px; background: linear-gradient(90deg, var(--border), transparent); }
+.grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+@media (min-width: 720px) { .grid { grid-template-columns: repeat(3, 1fr); } }
+@media (min-width: 1000px) { .grid { grid-template-columns: repeat(4, 1fr); } }
+.product { display: flex; flex-direction: column; scroll-margin-top: 260px; }
+.product .ph { display: block; width: 100%; aspect-ratio: 4 / 3; background: var(--surface-2); position: relative; overflow: hidden; padding: 0; }
+.product .ph img { width: 100%; height: 100%; object-fit: cover; }
+.product .ph .count { position: absolute; bottom: 8px; right: 8px; background: rgba(0, 0, 0, 0.65); padding: 2px 8px; border-radius: 99px; font-size: 11px; }
+.product .tag { position: absolute; top: 8px; left: 8px; background: var(--gold); color: #141414; font-size: 10px; font-weight: 800; padding: 3px 8px; border-radius: 99px; text-transform: uppercase; letter-spacing: 0.06em; }
+.product .body { padding: 10px 12px 12px; display: flex; flex-direction: column; gap: 4px; flex: 1; }
+.product h3 { font-size: 14px; line-height: 1.25; }
+.product p { font-size: 12px; color: var(--muted); margin: 0; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.product .price { color: var(--gold); font-weight: 800; font-family: var(--font-heading); }
+.product .btn { margin-top: auto; }
+.product.hl { outline: 2px solid var(--gold); }
+.rows { display: flex; flex-direction: column; gap: 8px; }
+.row { display: flex; align-items: center; gap: 12px; padding: 12px 12px 12px 16px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); scroll-margin-top: 260px; }
+.row .txt { flex: 1; min-width: 0; }
+.row h3 { font-size: 14px; font-family: var(--font-body); font-weight: 600; }
+.row p { margin: 2px 0 0; font-size: 12px; color: var(--muted); }
+.row .price { color: var(--gold); font-weight: 800; font-family: var(--font-heading); white-space: nowrap; }
+.add-btn { width: 38px; height: 38px; border-radius: 50%; display: grid; place-items: center; background: var(--gold); color: #141414; flex-shrink: 0; }
+.add-btn svg { width: 18px; height: 18px; }
+
+/* ───────── Pedido ───────── */
+.line { display: flex; gap: 12px; align-items: center; padding: 12px; }
+.line + .line { border-top: 1px solid var(--border); }
+.line .thumb { width: 60px; height: 60px; border-radius: 14px; overflow: hidden; background: var(--surface-2); flex-shrink: 0; }
+.line .thumb img { width: 100%; height: 100%; object-fit: cover; }
+.line .txt { flex: 1; min-width: 0; }
+.line h3 { font-size: 14px; font-family: var(--font-body); font-weight: 600; }
+.line.off { opacity: 0.55; }
+.qty { display: flex; align-items: center; gap: 8px; }
+.qty button { width: 32px; height: 32px; border-radius: 50%; border: 1px solid var(--border); display: grid; place-items: center; background: var(--surface-2); }
+.qty button svg { width: 16px; height: 16px; }
+.qty span { min-width: 18px; text-align: center; font-weight: 700; }
+.summary { padding: 16px; display: flex; justify-content: space-between; align-items: center; }
+.summary strong { font-family: var(--font-heading); font-size: 22px; color: var(--gold); }
+.who { padding: 14px 16px; display: flex; gap: 12px; align-items: center; }
+.who .ico { width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; background: color-mix(in srgb, var(--gold) 14%, transparent); color: var(--gold); flex-shrink: 0; }
+.who .ico svg { width: 20px; height: 20px; }
+.review-btns { display: grid; gap: 12px; }
+.review-btn { display: flex; align-items: center; gap: 14px; padding: 16px; border-radius: var(--radius); background: var(--surface); border: 1px solid var(--border); }
+.review-btn .logo { width: 46px; height: 46px; border-radius: 50%; display: grid; place-items: center; background: #fff; flex-shrink: 0; }
+.review-btn .logo svg { width: 26px; height: 26px; }
+.review-btn strong { display: block; }
+.prose { color: #d4d4d8; font-size: 14px; }
+.prose h1 { font-size: 22px; margin: 18px 0 10px; }
+.prose h2 { font-size: 15px; margin: 18px 0 6px; color: var(--gold); text-transform: uppercase; letter-spacing: 0.05em; }

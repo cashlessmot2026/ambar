@@ -1,0 +1,56 @@
+/* ───────── Tarjeta de fidelización ───────── */
+.loyalty {
+  position: relative; width: 100%; max-width: 420px; margin: 0 auto; aspect-ratio: 1.586;
+  border-radius: 22px; padding: 18px 20px; overflow: hidden; cursor: grab; touch-action: none;
+  display: flex; flex-direction: column; justify-content: space-between;
+  background:
+    radial-gradient(120% 90% at 100% 0%, color-mix(in srgb, var(--gold) 38%, transparent), transparent 55%),
+    radial-gradient(80% 80% at 0% 100%, color-mix(in srgb, var(--amber) 22%, transparent), transparent 60%),
+    linear-gradient(135deg, #1b1b1f 0%, #0b0b0c 100%);
+  border: 1px solid color-mix(in srgb, var(--gold) 45%, transparent);
+  box-shadow: 0 24px 50px rgba(0, 0, 0, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  user-select: none;
+}
+.loyalty:active { cursor: grabbing; }
+.loyalty-shine {
+  position: absolute; inset: -40%; pointer-events: none;
+  background: linear-gradient(115deg, transparent 40%, rgba(255, 255, 255, 0.10) 50%, transparent 60%);
+  animation: shine 5s ease-in-out infinite;
+}
+@keyframes shine { 0%, 60% { transform: translateX(-40%); } 100% { transform: translateX(40%); } }
+.loyalty-top { display: flex; align-items: center; justify-content: space-between; position: relative; }
+.loyalty-logo { width: 46px; height: 46px; object-fit: contain; }
+.loyalty-brand { text-align: right; line-height: 1; font-family: var(--font-heading); }
+.loyalty-brand span { display: block; font-size: 10px; letter-spacing: 0.3em; color: var(--muted); }
+.loyalty-brand strong { font-size: 22px; letter-spacing: 0.18em; color: var(--gold); }
+.loyalty-mid { display: flex; align-items: center; gap: 10px; position: relative; }
+.loyalty-chip { width: 44px; height: 33px; }
+.loyalty-nfc { width: 22px; height: 22px; color: color-mix(in srgb, var(--text) 60%, transparent); }
+.loyalty-stars { display: flex; flex-wrap: wrap; gap: 4px; position: relative; }
+.loyalty-stars span { width: 22px; height: 22px; color: rgba(255, 255, 255, 0.14); display: grid; place-items: center; }
+.loyalty-stars span svg { width: 100%; height: 100%; }
+.loyalty-stars span.on { color: var(--gold); filter: drop-shadow(0 0 6px color-mix(in srgb, var(--gold) 60%, transparent)); }
+.loyalty-stars .more { width: auto; color: var(--muted); font-size: 12px; font-weight: 700; }
+.loyalty-bottom { display: flex; justify-content: space-between; gap: 10px; position: relative; font-family: var(--font-heading); }
+.loyalty-bottom small { display: block; font-size: 9px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--muted); }
+.loyalty-bottom strong { font-size: 14px; letter-spacing: 0.08em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; max-width: 210px; }
+@media (max-width: 360px) { .loyalty { padding: 14px 16px; } .loyalty-stars span { width: 18px; height: 18px; } }
+
+.stars-count { text-align: center; margin: 20px 0 4px; }
+.stars-count strong { font-family: var(--font-heading); font-size: 44px; color: var(--gold); line-height: 1; }
+.reward { padding: 14px 16px; display: flex; flex-direction: column; gap: 10px; }
+.reward + .reward { border-top: 1px solid var(--border); }
+.reward-head { display: flex; align-items: center; gap: 12px; }
+.reward-head .ico { width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center; background: color-mix(in srgb, var(--gold) 14%, transparent); color: var(--gold); flex-shrink: 0; overflow: hidden; }
+.reward-head .ico img { width: 100%; height: 100%; object-fit: cover; }
+.reward-head .ico svg { width: 22px; height: 22px; }
+.bar { height: 8px; border-radius: 99px; background: var(--surface-2); overflow: hidden; }
+.bar span { display: block; height: 100%; border-radius: 99px; background: linear-gradient(90deg, var(--amber), var(--gold)); }
+.pending { padding: 16px; border-radius: var(--radius); border: 1px dashed var(--gold); background: color-mix(in srgb, var(--gold) 8%, var(--surface)); text-align: center; }
+.how { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.how div { padding: 14px 10px; text-align: center; font-size: 12px; color: var(--muted); }
+.how .n { width: 30px; height: 30px; border-radius: 50%; margin: 0 auto 8px; display: grid; place-items: center; background: var(--gold); color: #141414; font-weight: 800; font-family: var(--font-heading); }
+
+.claim { min-height: 70dvh; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: 10px; padding: 24px 16px; }
+.claim .big-star { width: 140px; height: 140px; color: var(--gold); filter: drop-shadow(0 0 30px color-mix(in srgb, var(--gold) 70%, transparent)); }
+.claim h1 { font-size: 28px; text-transform: uppercase; }
