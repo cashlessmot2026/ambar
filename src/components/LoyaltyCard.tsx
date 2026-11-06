@@ -1,4 +1,5 @@
 import { motion, useMotionValue, useSpring, useTransform } from 'motion/react'
+import { useI18n } from '../i18n/I18n'
 import { mediaUrl } from '../lib/format'
 import type { Customer } from '../lib/types'
 import { Icon } from './Icon'
@@ -10,6 +11,7 @@ export function maskPhone(phone: string): string {
 
 /** Tarjeta de fidelización tipo tarjeta de crédito. Se puede arrastrar e inclinar; vuelve a su sitio al soltar. */
 export function LoyaltyCard({ customer, goal }: { customer: Customer; goal: number }) {
+  const { t } = useI18n()
   const x = useMotionValue(0)
   const y = useMotionValue(0)
   const rotateY = useSpring(useTransform(x, [-150, 150], [-18, 18]), { stiffness: 300, damping: 30 })
@@ -31,13 +33,13 @@ export function LoyaltyCard({ customer, goal }: { customer: Customer; goal: numb
         initial={{ opacity: 0, scale: 0.85 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ type: 'spring', stiffness: 160, damping: 18 }}
-        aria-label={`Tarjeta Ámbar de ${customer.name}, ${customer.stars} estrellas`}
+        aria-label={t('card.aria', { name: customer.name, n: customer.stars })}
       >
         <div className="loyalty-shine" />
         <div className="loyalty-top">
           <img src={mediaUrl('logo.png')} alt="" className="loyalty-logo" />
           <div className="loyalty-brand">
-            <span>TARJETA</span>
+            <span>{t('card.label')}</span>
             <strong>ÁMBAR</strong>
           </div>
         </div>
@@ -70,12 +72,12 @@ export function LoyaltyCard({ customer, goal }: { customer: Customer; goal: numb
         </div>
         <div className="loyalty-bottom">
           <div>
-            <small>Titular</small>
+            <small>{t('card.holder')}</small>
             <strong>{customer.name.toUpperCase()}</strong>
           </div>
-          <div style={{ textAlign: 'right' }}>
-            <small>Teléfono</small>
-            <strong>{maskPhone(customer.phone)}</strong>
+          <div style={{ textAlign: 'end' }}>
+            <small>{t('card.phone')}</small>
+            <strong dir="ltr">{maskPhone(customer.phone)}</strong>
           </div>
         </div>
       </motion.div>

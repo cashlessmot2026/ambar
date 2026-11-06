@@ -7,6 +7,7 @@ import { AppDataProvider, useAppData } from './context/AppData'
 import { CartProvider } from './context/Cart'
 import { CustomerProvider } from './context/Customer'
 import { ThemeApplier } from './context/Theme'
+import { I18nProvider } from './i18n/I18n'
 import Card from './pages/Card'
 import Cart from './pages/Cart'
 import Home from './pages/Home'
@@ -64,6 +65,7 @@ function Root() {
 export default function App() {
   return (
     <HashRouter>
+      <I18nProvider>
       <AppDataProvider>
         <CustomerProvider>
           <CartProvider>
@@ -73,6 +75,7 @@ export default function App() {
           </CartProvider>
         </CustomerProvider>
       </AppDataProvider>
+      </I18nProvider>
     </HashRouter>
   )
 }

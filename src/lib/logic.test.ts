@@ -73,3 +73,24 @@ describe('rewardProgress', () => {
     expect(rewardProgress(25, rewards)[1].pct).toBe(100)
   })
 })
+
+describe('buildWhatsAppUrl idioma del cliente', () => {
+  const order = { id: 'a', number: 7, total: 1000, notes: null, created_at: '', items: [{ product_id: 'p', name: 'Café', qty: 1, price: 1000 }] }
+  const customer = { id: 'c', name: 'John', address: 'Hotel', phone: '3001112233', stars: 0, pending_reward_id: null, created_at: '' }
+  it('agrega el idioma del cliente en español cuando no es español', () => {
+    const text = decodeURIComponent(buildWhatsAppUrl('573229089680', order, customer, 'en').split('&text=')[1])
+    expect(text).toContain('Idioma del cliente: Inglés')
+  })
+  it('no agrega la línea si el cliente usa español', () => {
+    const text = decodeURIComponent(buildWhatsAppUrl('573229089680', order, customer, 'es').split('&text=')[1])
+    expect(text).not.toContain('Idioma del cliente')
+  })
+})
+
+describe('apiErrorKey', () => {
+  it('mapea códigos conocidos y cae a genérico', async () => {
+    const { apiErrorKey } = await import('../i18n/I18n')
+    expect(apiErrorKey('phone_in_use')).toBe('err.phone_in_use')
+    expect(apiErrorKey('algo_raro')).toBe('err.generic')
+  })
+})

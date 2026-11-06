@@ -1,4 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
+import { ApiError } from '../lib/api'
+import type { Settings } from '../lib/types'
 import { DICTS } from './dicts'
 import { es, type Key } from './locales/es'
 
@@ -38,7 +40,25 @@ export function translate(lang: Lang, key: Key, vars?: Record<string, string | n
   return s
 }
 
-type I18nField = Partial<Record<Lang, Record<string, string | undefined>>>
+/** Clave de traducción para cualquier error lanzado por la API. */
+export function errKey(e: unknown): Key {
+  return apiErrorKey(e instanceof ApiError ? e.code : 'generic')
+}
+
+/** Texto del negocio o del landing en el idioma pedido; si falta, el original en español. */
+export function settingText(s: Settings, lang: Lang, section: 'landing' | 'business', field: string): string {
+  const tr = lang === 'es' ? undefined : (s.i18n?.[lang]?.[section] as Record<string, string> | undefined)?.[field]
+  if (tr && tr.trim()) return tr
+  return String((s[section] as unknown as Record<string, unknown>)[field] ?? '')
+}
+
+/** Clave de traducción para un código de error de la API (ApiError.code). */
+export function apiErrorKey(code: string): Key {
+  const k = `err.${code}`
+  return (k in es ? k : 'err.generic') as Key
+}
+
+type I18nField =Partial<Record<Lang, Record<string, string | undefined>>>
 
 /** Campo traducido de un registro de la base de datos; vacío o ausente → valor base en español. */
 export function localized<T extends { i18n?: I18nField }>(obj: T, field: keyof T & string, lang: Lang): string {
