@@ -7,7 +7,9 @@ import { formatCOP, mediaUrl } from '../lib/format'
 import type { Category, Menu, Product } from '../lib/types'
 import { ConfirmButton } from './ConfirmButton'
 import { ImageListEditor } from './ImageListEditor'
+import { LangTabs, trGet, trMissing, trSet } from './LangTabs'
 import { useAdmin } from './useAdmin'
+import type { Lang } from '../i18n/I18n'
 
 type ProductDraft = Omit<Product, 'id' | 'sort'> & { id?: string; sort?: number; category_id: string }
 
@@ -17,6 +19,9 @@ export default function Products() {
   const [menuId, setMenuId] = useState<string | null>(null)
   const [draft, setDraft] = useState<ProductDraft | null>(null)
   const [newCat, setNewCat] = useState('')
+  // Idioma en el que se editan los textos de menús y categorías (los productos tienen sus propias pestañas).
+  const [editLang, setEditLang] = useState<Lang>('es')
+  const [draftLang, setDraftLang] = useState<Lang>('es')
   const [error, setError] = useState<string | null>(null)
   const [saved, setSaved] = useState<string | null>(null)
 
@@ -42,6 +47,7 @@ export default function Products() {
   async function saveProduct() {
     if (!draft) return
     if (!draft.name.trim() || !(draft.price >= 0)) {
+      setDraftLang('es')
       setError('El producto necesita nombre y precio.')
       return
     }
@@ -53,8 +59,11 @@ export default function Products() {
 
   const saveMenu = (m: Menu, patch: Partial<Menu>) =>
     op((t) => api.admin.upsert(t, 'menus', { id: m.id, ...patch }))
-  const saveCategory = (c: Category, patch: Partial<Category>) =>
-    op((t) => api.admin.upsert(t, 'categories', { id: c.id, ...patch }))
+  /** Guarda un texto en el idioma de edición: campo base (es) o dentro de i18n. */
+  const saveText = <T extends Menu | Category>(table: 'menus' | 'categories', obj: T, field: string, value: string) => {
+    const next = trSet(obj, field, editLang, value)
+    return op((t) => api.admin.upsert(t, table, editLang === 'es' ? { id: obj.id, [field]: value } : { id: obj.id, i18n: next.i18n ?? {} }))
+  }
   const moveCategory = (cats: Category[], i: number, dir: -1 | 1) => {
     const j = i + dir
     if (j < 0 || j >= cats.length) return
@@ -80,14 +89,23 @@ export default function Products() {
           <button key={m.id} className={m.id === menu?.id ? 'on' : ''} onClick={() => setMenuId(m.id)}>{m.name}{m.active === false ? ' (oculto)' : ''}</button>
         ))}
       </div>
+      <div className="toolbar" style={{ marginBottom: 10 }}>
+        <span className="muted" style={{ fontSize: 13 }}>Idioma de los textos:</span>
+        <LangTabs
+          lang={editLang}
+          onChange={setEditLang}
+          missing={(l) => !!menu && [menu, ...menu.categories].some((o) => trMissing(o as never, ['name'], l))}
+        />
+      </div>
+      {editLang !== 'es' && <p className="muted" style={{ fontSize: 12, marginTop: -4 }}>Editando la traducción. Si un campo queda vacío, los clientes ven el texto en español.</p>}
       {error && <p className="error">{error}</p>}
 
       {menu && (
-        <div className="card panel" key={menu.id}>
+        <div className="card panel" key={menu.id + editLang}>
           <h2>Menú: {menu.name}</h2>
           <div className="form-grid">
-            <div className="field"><label>Nombre</label><input className="input" defaultValue={menu.name} onBlur={(e) => e.target.value !== menu.name && void saveMenu(menu, { name: e.target.value })} /></div>
-            <div className="field"><label>Subtítulo</label><input className="input" defaultValue={menu.subtitle ?? ''} onBlur={(e) => e.target.value !== (menu.subtitle ?? '') && void saveMenu(menu, { subtitle: e.target.value })} /></div>
+            <div className="field"><label>Nombre</label><input className="input" placeholder={editLang !== 'es' ? menu.name : undefined} defaultValue={trGet(menu as never, 'name', editLang)} onBlur={(e) => e.target.value !== trGet(menu as never, 'name', editLang) && (editLang !== 'es' || e.target.value.trim()) && void saveText('menus', menu, 'name', e.target.value)} /></div>
+            <div className="field"><label>Subtítulo</label><input className="input" placeholder={editLang !== 'es' ? (menu.subtitle ?? '') : undefined} defaultValue={trGet(menu as never, 'subtitle', editLang)} onBlur={(e) => e.target.value !== trGet(menu as never, 'subtitle', editLang) && void saveText('menus', menu, 'subtitle', e.target.value)} /></div>
             <div className="field"><label>Se muestra primero desde</label><input className="input" type="time" defaultValue={menu.start_time} onBlur={(e) => e.target.value !== menu.start_time && void saveMenu(menu, { start_time: e.target.value })} /></div>
             <div className="field"><label>hasta</label><input className="input" type="time" defaultValue={menu.end_time} onBlur={(e) => e.target.value !== menu.end_time && void saveMenu(menu, { end_time: e.target.value })} /></div>
           </div>
@@ -100,9 +118,9 @@ export default function Products() {
       )}
 
       {menu?.categories.map((c, i, cats) => (
-        <div className="card cat-block" key={c.id}>
+        <div className="card cat-block" key={c.id + editLang}>
           <div className="cat-block-head">
-            <input className="input" defaultValue={c.name} onBlur={(e) => e.target.value.trim() && e.target.value !== c.name && void saveCategory(c, { name: e.target.value.trim() })} aria-label="Nombre de la categoría" />
+            <input className="input" placeholder={editLang !== 'es' ? c.name : undefined} defaultValue={trGet(c as never, 'name', editLang)} onBlur={(e) => e.target.value !== trGet(c as never, 'name', editLang) && (editLang !== 'es' || e.target.value.trim()) && void saveText('categories', c, 'name', e.target.value.trim())} aria-label="Nombre de la categoría" />
             <button className="mini" onClick={() => moveCategory(cats, i, -1)} aria-label="Subir"><Icon name="arrowLeft" style={{ transform: 'rotate(90deg)' }} /></button>
             <button className="mini" onClick={() => moveCategory(cats, i, 1)} aria-label="Bajar"><Icon name="arrowRight" style={{ transform: 'rotate(90deg)' }} /></button>
             <ConfirmButton label="Eliminar categoría" onConfirm={() => void op((t) => api.admin.remove(t, 'categories', c.id), 'Categoría eliminada')} />
@@ -111,15 +129,15 @@ export default function Products() {
             <div key={p.id} className={`list-item${p.active === false ? ' off' : ''}`}>
               <div className="thumb">{p.images[0] ? <img src={mediaUrl(p.images[0])} alt="" /> : null}</div>
               <div className="txt">
-                <strong>{p.name} {p.featured ? '⭐' : ''}</strong>
+                <strong>{trGet(p as never, 'name', editLang) || p.name} {p.featured ? '⭐' : ''}</strong>
                 <small>{formatCOP(p.price)} · {p.images.length} fotos{p.active === false ? ' · oculto' : ''}</small>
               </div>
-              <button className="mini" onClick={() => setDraft({ ...p, category_id: c.id, description: p.description ?? '' })} aria-label={`Editar ${p.name}`}><Icon name="edit" /></button>
+              <button className="mini" onClick={() => { setDraftLang(editLang); setDraft({ ...p, category_id: c.id, description: p.description ?? '' }) }} aria-label={`Editar ${p.name}`}><Icon name="edit" /></button>
               <ConfirmButton onConfirm={() => void op((t) => api.admin.remove(t, 'products', p.id), 'Producto eliminado')} />
             </div>
           ))}
           <div style={{ padding: 12 }}>
-            <button className="btn sm" onClick={() => setDraft({ category_id: c.id, name: '', description: '', price: 0, images: [], featured: false, active: true, sort: c.products.length + 1 })}>
+            <button className="btn sm" onClick={() => { setDraftLang('es'); setDraft({ category_id: c.id, name: '', description: '', price: 0, images: [], featured: false, active: true, sort: c.products.length + 1, i18n: {} }) }}>
               <Icon name="plus" /> Producto
             </button>
           </div>
@@ -147,8 +165,15 @@ export default function Products() {
             <motion.div className="sheet" onClick={(e) => e.stopPropagation()} initial={{ y: 60 }} animate={{ y: 0 }} exit={{ y: 60 }}>
               <div className="grab" />
               <h2>{draft.id ? 'Editar producto' : 'Nuevo producto'}</h2>
-              <div className="field"><label>Nombre</label><input className="input" value={draft.name} onChange={(e) => setDraft({ ...draft, name: e.target.value })} autoFocus /></div>
-              <div className="field"><label>Descripción</label><textarea className="input" value={draft.description ?? ''} onChange={(e) => setDraft({ ...draft, description: e.target.value })} /></div>
+              <LangTabs lang={draftLang} onChange={setDraftLang} missing={(l) => trMissing(draft as never, ['name', 'description'], l)} />
+              <div className="field" style={{ marginTop: 12 }}>
+                <label>Nombre{draftLang !== 'es' ? ` (${draftLang.toUpperCase()})` : ''}</label>
+                <input className="input" dir={draftLang === 'ar' ? 'rtl' : 'ltr'} placeholder={draftLang !== 'es' ? draft.name : undefined} value={trGet(draft as never, 'name', draftLang)} onChange={(e) => setDraft(trSet(draft, 'name', draftLang, e.target.value))} autoFocus />
+              </div>
+              <div className="field">
+                <label>Descripción{draftLang !== 'es' ? ` (${draftLang.toUpperCase()})` : ''}</label>
+                <textarea className="input" dir={draftLang === 'ar' ? 'rtl' : 'ltr'} placeholder={draftLang !== 'es' ? (draft.description ?? '') : undefined} value={trGet(draft as never, 'description', draftLang)} onChange={(e) => setDraft(trSet(draft, 'description', draftLang, e.target.value))} />
+              </div>
               <div className="form-grid">
                 <div className="field"><label>Precio (COP)</label><input className="input" type="number" min={0} step={500} value={draft.price} onChange={(e) => setDraft({ ...draft, price: Number(e.target.value) })} /></div>
                 <div className="field">
