@@ -49,6 +49,7 @@ node scripts/db.mjs supabase/migrations/005_hardening.sql
 node scripts/db.mjs supabase/migrations/006_i18n_ordering.sql
 node scripts/db.mjs supabase/migrations/007_i18n_data.sql      # traducciones del menú (volver a aplicar si se reaplica 003)
 node scripts/db.mjs supabase/migrations/008_review_fixes.sql
+node scripts/db.mjs supabase/migrations/009_survey.sql           # encuesta de satisfacción
 
 # Pruebas de las RPC (todo se revierte):
 node scripts/db.mjs supabase/tests/rpc_test.sql --expect-error ALL_TESTS_PASSED

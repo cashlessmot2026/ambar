@@ -14,6 +14,7 @@ import Products from './Products'
 import QrNfc from './QrNfc'
 import Rewards from './Rewards'
 import Security from './Security'
+import SurveyAdmin from './SurveyAdmin'
 import { AdminProvider, useAdmin } from './useAdmin'
 
 const TABS: { to: string; label: string; icon: IconName }[] = [
@@ -22,6 +23,7 @@ const TABS: { to: string; label: string; icon: IconName }[] = [
   { to: 'premios', label: 'Premios', icon: 'gift' },
   { to: 'menus', label: 'Menús', icon: 'menu' },
   { to: 'pagina', label: 'Página', icon: 'palette' },
+  { to: 'encuesta', label: 'Encuesta', icon: 'star' },
   { to: 'qr', label: 'QR / NFC', icon: 'qr' },
   { to: 'seguridad', label: 'Seguridad', icon: 'lock' },
 ]
@@ -91,6 +93,7 @@ function Shell() {
           <Route path="premios" element={<Rewards />} />
           <Route path="menus" element={<Products />} />
           <Route path="pagina" element={<PageSettings />} />
+          <Route path="encuesta" element={<SurveyAdmin />} />
           <Route path="qr" element={<QrNfc />} />
           <Route path="seguridad" element={<Security />} />
           <Route path="*" element={<Navigate to="pedidos" replace />} />

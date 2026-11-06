@@ -84,3 +84,10 @@
 .detail-body .price { color: var(--gold); font-weight: 800; font-size: 18px; font-family: var(--font-heading); }
 .detail-body p { margin: 0; font-size: 14px; line-height: 1.55; color: var(--muted); white-space: pre-line; }
 .detail-body .btn { margin-top: 8px; }
+
+/* ───────── Encuesta ───────── */
+.survey-q { display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 16px; margin-bottom: 12px; text-align: center; }
+.stars { display: flex; gap: 6px; }
+.star-btn { width: 48px; height: 48px; display: grid; place-items: center; color: var(--border); background: none; border: 0; padding: 0; }
+.star-btn svg { width: 38px; height: 38px; }
+.star-btn.on { color: var(--gold); filter: drop-shadow(0 0 8px color-mix(in srgb, var(--gold) 55%, transparent)); }

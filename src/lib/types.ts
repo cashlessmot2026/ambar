@@ -75,6 +75,8 @@ export interface Settings {
   i18n?: Partial<Record<string, { landing?: Partial<Record<'headline' | 'subheadline', string>>; business?: Partial<Record<'tagline' | 'location' | 'award', string>> }>>
   /** Pedidos por la app; ausente = activo. */
   ordering?: { enabled: boolean }
+  /** Encuesta de satisfacción; ausente = encuesta por defecto. */
+  survey?: Survey
 }
 
 export interface PublicData {
@@ -135,4 +137,29 @@ export interface AdminData {
   business_key: string
   menus: Menu[]
   rewards: Reward[]
+}
+
+export interface SurveyQuestion {
+  id: string
+  text: string
+}
+
+export interface Survey {
+  title: string
+  intro: string
+  questions: SurveyQuestion[]
+  comment_enabled: boolean
+}
+
+export interface SurveyResults {
+  total: number
+  average: number | null
+  by_question: { text: string; avg: number; count: number }[]
+  recent: {
+    id: string
+    created_at: string
+    average: number
+    comment: string | null
+    answers: { id: string; text: string; rating: number }[]
+  }[]
 }

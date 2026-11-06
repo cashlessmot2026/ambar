@@ -1,7 +1,7 @@
 import { createClient } from '@supabase/supabase-js'
 import { SUPABASE_KEY, SUPABASE_URL, supabase } from './supabase'
 import type {
-  AdminCustomer, AdminData, AdminOrder, ClaimResult, Customer, OrderSummary, PublicData, Settings,
+  AdminCustomer, AdminData, AdminOrder, ClaimResult, Customer, OrderSummary, PublicData, Settings, Survey, SurveyResults,
 } from './types'
 
 export class ApiError extends Error {
@@ -30,6 +30,7 @@ const MESSAGES: Record<string, string> = {
   ordering_disabled: 'Los pedidos por la app están desactivados.',
   phone_in_use:'Este teléfono ya tiene una Tarjeta Ámbar. Escribe el mismo nombre con el que te registraste.',
   password_too_short: 'La nueva contraseña debe tener al menos 4 caracteres.',
+  invalid_survey: 'La encuesta no es válida. Califica todas las preguntas.',
   unauthorized: 'Tu sesión de administrador expiró.',
   network: 'Sin conexión. Revisa tu internet e inténtalo de nuevo.',
 }
@@ -64,6 +65,8 @@ export const api = {
     rpc<OrderSummary>('place_order', { p_token: token, p_items: items, p_notes: notes }),
   armRedeem: (token: string, rewardId: string | null) =>
     rpc<Customer>('arm_redeem', { p_token: token, p_reward_id: rewardId }),
+  submitSurvey: (answers: { id: string; text: string; rating: number }[], comment: string) =>
+    rpc<void>('submit_survey', { p_answers: answers, p_comment: comment }),
   claimStar: (token: string, key: string) => rpc<ClaimResult>('claim_star', { p_token: token, p_key: key }),
 
   admin: {
@@ -88,6 +91,8 @@ export const api = {
     saveSettings: (t: string, data: Settings) => rpc<Settings>('admin_save_settings', { p_token: t, p_data: data }),
     /** Activa o desactiva los pedidos por la app (modo solo menú). Solo cambia esa clave de settings. */
     setOrdering: (t: string, enabled: boolean) => rpc<Settings>('admin_set_ordering', { p_token: t, p_enabled: enabled }),
+    setSurvey: (t: string, data: Survey) => rpc<Settings>('admin_set_survey', { p_token: t, p_data: data }),
+    surveyResults: (t: string, limit = 50) => rpc<SurveyResults>('admin_survey_results', { p_token: t, p_limit: limit }),
     changePassword: (t: string, oldPw: string, newPw: string) =>
       rpc<void>('admin_change_password', { p_token: t, p_old: oldPw, p_new: newPw }),
   },

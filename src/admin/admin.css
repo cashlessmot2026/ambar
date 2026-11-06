@@ -94,3 +94,18 @@
 .lang-tabs { flex-wrap: wrap; }
 .lang-tabs button { position: relative; }
 .lang-missing { position: absolute; top: 3px; inset-inline-end: 3px; width: 6px; height: 6px; border-radius: 50%; background: var(--amber); }
+
+h2.sub { font-size: 13px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin: 22px 0 10px; }
+.survey-edit-row { display: flex; align-items: center; gap: 8px; margin-top: 8px; }
+.survey-edit-row .n { width: 22px; text-align: center; color: var(--gold); font-weight: 800; flex-shrink: 0; }
+.survey-edit-row .input { flex: 1; min-width: 0; }
+.survey-edit-row .mini:disabled { opacity: 0.35; }
+.survey-summary { display: flex; gap: 28px; }
+.survey-summary small { display: block; color: var(--muted); font-size: 12px; }
+.survey-summary strong { font-size: 26px; font-family: var(--font-heading); }
+.avg-row { display: flex; justify-content: space-between; gap: 12px; padding: 8px 0; border-top: 1px solid var(--border); font-size: 14px; }
+.avg-row:first-of-type { border-top: 0; }
+.resp { padding: 10px 0; border-top: 1px solid var(--border); }
+.resp:first-of-type { border-top: 0; }
+.resp .head { display: flex; justify-content: space-between; gap: 8px; }
+.resp p { margin: 6px 0; font-size: 14px; }

@@ -15,6 +15,7 @@ import Home from './pages/Home'
 import Menu from './pages/Menu'
 import Privacy from './pages/Privacy'
 import Star from './pages/Star'
+import Survey from './pages/Survey'
 import Thanks from './pages/Thanks'
 
 // El panel admin solo se descarga si alguien entra a su ruta.
@@ -42,6 +43,7 @@ function PublicApp() {
           <Route path="/gracias" element={<Page><Thanks /></Page>} />
           <Route path="/tarjeta" element={<Page><Card /></Page>} />
           <Route path="/estrella" element={<Page><Star /></Page>} />
+          <Route path="/encuesta" element={<Page><Survey /></Page>} />
           <Route path="/privacidad" element={<Page><Privacy /></Page>} />
           <Route path="*" element={<Page><Home /></Page>} />
         </Routes>

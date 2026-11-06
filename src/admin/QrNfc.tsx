@@ -1,12 +1,8 @@
 import QRCode from 'qrcode'
 import { useEffect, useState } from 'react'
 import { Icon } from '../components/Icon'
+import { appBase, FixedQr } from './FixedQr'
 import { useAdmin } from './useAdmin'
-
-/** URL pública de la app (sin el hash), p. ej. https://ambar.ejemplo.com/ */
-function appBase(): string {
-  return window.location.origin + window.location.pathname
-}
 
 export default function QrNfc() {
   const { data } = useAdmin()
@@ -25,6 +21,16 @@ export default function QrNfc() {
   return (
     <>
       <h1>QR y tag NFC</h1>
+      <h2 className="sub">QR del menú</h2>
+      <FixedQr url={`${appBase()}#/menu`} alt="Código QR del menú" filename="ambar-qr-menu.png">
+        <h2>Para que el cliente vea el menú</h2>
+        <p style={{ fontSize: 14 }}>
+          Este QR es único y no cambia: al escanearlo se abre directamente el <strong className="gold">menú</strong> en el celular del cliente.
+          Puedes imprimirlo en las mesas; cuando edites productos o precios, el QR sigue funcionando igual.
+        </p>
+      </FixedQr>
+
+      <h2 className="sub">QR de estrellas (tarjeta de fidelidad)</h2>
       {local && (
         <p className="error">Estás en un servidor local. Genera e imprime el QR desde el dominio público donde publiques la app, para que apunte a la dirección correcta.</p>
       )}
