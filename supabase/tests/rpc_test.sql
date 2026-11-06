@@ -30,6 +30,12 @@ begin
   if r->'settings' is null or jsonb_typeof(r->'menus') <> 'array' then raise exception 'get_public_data shape'; end if;
   if r::text like '%T off%' then raise exception 'get_public_data expone productos inactivos'; end if;
 
+  -- Traducciones: el producto expone su i18n
+  update products set i18n = '{"en":{"name":"T product EN"}}' where id = p_ok;
+  update settings set data = data - 'ordering' where id = 1;
+  r := get_public_data();
+  if not (r::text like '%T product EN%') then raise exception 'get_public_data no expone i18n del producto'; end if;
+
   -- Registro sin consentimiento falla
   failed := false;
   begin perform register_customer('Ana', 'Calle 1', '3001112233', false); exception when others then failed := true; end;
@@ -131,6 +137,22 @@ begin
   if r->>'id' is null or jsonb_array_length(r->'images') <> 2 then raise exception 'admin_upsert insert: %', r; end if;
   r := admin_upsert(adm, 'products', jsonb_build_object('id', r->>'id', 'price', 2000));
   if (r->>'price')::int <> 2000 or r->>'name' <> 'Nuevo' then raise exception 'admin_upsert update: %', r; end if;
+  r := admin_upsert(adm, 'products', jsonb_build_object('id', r->>'id', 'i18n', '{"fr":{"name":"Nouveau"}}'::jsonb));
+  if r->'i18n'->'fr'->>'name' <> 'Nouveau' then raise exception 'admin_upsert no guardó i18n: %', r; end if;
+
+  -- Modo solo menú: el interruptor no pisa el resto de settings y bloquea pedidos en el servidor
+  update settings set data = data || '{"business":{"name":"X"}}' where id = 1;
+  r := admin_set_ordering(adm, false);
+  if r->'business'->>'name' <> 'X' or (r->'ordering'->>'enabled')::boolean <> false then raise exception 'admin_set_ordering: %', r; end if;
+  failed := false;
+  begin perform place_order(tok2, jsonb_build_array(jsonb_build_object('product_id', p_ok, 'qty', 1)), null);
+  exception when others then failed := sqlerrm = 'ordering_disabled'; end;
+  if not failed then raise exception 'con pedidos desactivados debió dar ordering_disabled'; end if;
+  perform admin_set_ordering(adm, true);
+  perform place_order(tok2, jsonb_build_array(jsonb_build_object('product_id', p_ok, 'qty', 1)), null);
+  failed := false;
+  begin perform admin_set_ordering('x', false); exception when others then failed := sqlerrm = 'unauthorized'; end;
+  if not failed then raise exception 'admin_set_ordering sin sesión debió dar unauthorized'; end if;
 
   -- Permisos: anon no puede tocar ninguna tabla ni llamar a los helpers internos
   for t in select tablename from pg_tables where schemaname = 'public' loop
