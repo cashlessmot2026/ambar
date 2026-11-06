@@ -19,3 +19,68 @@
 .lang-opt .flag { font-size: 22px; line-height: 1; }
 .lang-opt.on { border-color: var(--gold); background: color-mix(in srgb, var(--gold) 14%, var(--surface-2)); }
 .lang-opt .tick { width: 18px; height: 18px; margin-inline-start: auto; color: var(--gold); }
+
+/* ───────── Escrituras: respaldo de fuentes y tipografía ───────── */
+:root { --script-fallback: system-ui; }
+html:lang(zh-Hans) { --script-fallback: "PingFang SC", "Hiragino Sans GB", "Noto Sans SC", "Microsoft YaHei", system-ui; }
+html:lang(ko) { --script-fallback: "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", system-ui; }
+html:lang(ar) { --script-fallback: "Noto Sans Arabic", "Geeza Pro", "Segoe UI", system-ui; }
+/* Las mayúsculas forzadas y el espaciado de letras no existen o rompen estas escrituras. */
+html:lang(zh-Hans) body *, html:lang(ko) body *, html:lang(ar) body * { letter-spacing: 0 !important; text-transform: none !important; }
+html:lang(ar) body { line-height: 1.7; }
+html:lang(ar) h1, html:lang(ar) h2, html:lang(ar) h3 { line-height: 1.4; }
+
+/* ───────── RTL ───────── */
+[dir='rtl'] .flip-rtl { transform: scaleX(-1); }
+[dir='rtl'] .hscroll { direction: rtl; }
+
+/* ───────── Áreas seguras (notch, Dynamic Island, barra de inicio) ───────── */
+.topbar { padding-top: calc(12px + var(--safe-t)); padding-inline: calc(16px + var(--safe-l)) calc(16px + var(--safe-r)); }
+.page { padding-inline: calc(16px + var(--safe-l)) calc(16px + var(--safe-r)); }
+.hero-content { padding-inline: calc(16px + var(--safe-l)) calc(16px + var(--safe-r)); }
+.toast { bottom: calc(var(--nav-h) + 28px + var(--safe-b)); }
+
+/* iOS: evitar el zoom automático al enfocar campos y el menú de imagen al mantener presionado. */
+.input, select.input, textarea.input { font-size: 16px; }
+img { -webkit-touch-callout: none; }
+html, body { overscroll-behavior-y: none; }
+
+/* ───────── Teléfono en horizontal ───────── */
+@media (orientation: landscape) and (max-height: 520px) {
+  :root { --nav-h: 58px; }
+  .hero { min-height: 100dvh; border-radius: 0 0 24px 24px; }
+  .hero-logo { width: 110px; margin-bottom: 6px; }
+  .hero h1 { font-size: 26px; }
+  .hero p { margin: 6px auto 12px; }
+  .nav a { flex-direction: row; gap: 6px; font-size: 12px; }
+  .menu-head { top: 58px; }
+  .sheet { max-height: 96dvh; }
+  .loyalty { max-width: 360px; }
+}
+
+/* ───────── Tablet ───────── */
+@media (min-width: 768px) {
+  .lang-grid { grid-template-columns: repeat(2, 1fr); }
+  .gallery-item { width: 260px; height: 330px; }
+  .feature-card { width: 300px; }
+  .hero { min-height: min(70dvh, 720px); }
+}
+@media (min-width: 768px) and (max-width: 899px) {
+  .nav { max-width: 520px; margin-inline: auto; }
+}
+
+/* ───────── Guía de instalación iOS ───────── */
+.ios-hint {
+  position: fixed; z-index: 60;
+  inset-inline: 12px; bottom: calc(var(--nav-h) + 22px + var(--safe-b));
+  display: flex; gap: 12px; align-items: flex-start;
+  padding: 14px 14px 14px 16px; border-radius: 20px;
+  background: var(--surface-2); border: 1px solid color-mix(in srgb, var(--gold) 45%, var(--border));
+  box-shadow: var(--shadow);
+}
+.ios-hint img { width: 44px; height: 44px; border-radius: 12px; background: var(--bg); padding: 4px; flex-shrink: 0; }
+.ios-hint strong { display: block; font-size: 14px; }
+.ios-hint p { margin: 2px 0 0; font-size: 13px; color: var(--muted); }
+.ios-hint p svg { width: 16px; height: 16px; vertical-align: -3px; color: #0a84ff; }
+.ios-hint .x { width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; flex-shrink: 0; color: var(--muted); }
+.ios-hint .x svg { width: 16px; height: 16px; }

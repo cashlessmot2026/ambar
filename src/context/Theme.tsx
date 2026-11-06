@@ -17,7 +17,7 @@ export function applyTheme(theme: Settings['theme'] | undefined) {
   for (const [k, v] of Object.entries(theme.colors ?? {})) {
     if (VARS[k] && /^#[0-9a-fA-F]{3,8}$/.test(v)) root.style.setProperty(VARS[k], v)
   }
-  if (theme.colors?.surface) {
+  if (theme.colors?.surface && /^#[0-9a-fA-F]{3,8}$/.test(theme.colors.surface)) {
     root.style.setProperty('--surface-2', `color-mix(in srgb, ${theme.colors.surface} 85%, #ffffff 4%)`)
   }
   const fonts = [theme.fonts?.heading, theme.fonts?.body].filter((f): f is string => !!f && FONT_OPTIONS.includes(f))
@@ -34,8 +34,9 @@ export function applyTheme(theme: Settings['theme'] | undefined) {
     }
     if (link.href !== href) link.href = href
   }
-  if (theme.fonts?.heading) root.style.setProperty('--font-heading', `'${theme.fonts.heading}', system-ui, sans-serif`)
-  if (theme.fonts?.body) root.style.setProperty('--font-body', `'${theme.fonts.body}', system-ui, sans-serif`)
+  // --script-fallback (i18n.css) agrega fuentes para chino, coreano y árabe según el idioma.
+  if (theme.fonts?.heading) root.style.setProperty('--font-heading', `'${theme.fonts.heading}', var(--script-fallback), sans-serif`)
+  if (theme.fonts?.body) root.style.setProperty('--font-body', `'${theme.fonts.body}', var(--script-fallback), sans-serif`)
   const meta = document.querySelector('meta[name="theme-color"]')
   if (meta && theme.colors?.bg) meta.setAttribute('content', theme.colors.bg)
 }

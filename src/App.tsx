@@ -2,6 +2,7 @@ import { AnimatePresence, motion } from 'motion/react'
 import { lazy, Suspense, type ReactNode } from 'react'
 import { HashRouter, Route, Routes, useLocation } from 'react-router-dom'
 import { BottomNav } from './components/BottomNav'
+import { IosInstallHint } from './components/IosInstallHint'
 import { ToastProvider } from './components/Toast'
 import { AppDataProvider, useAppData } from './context/AppData'
 import { CartProvider } from './context/Cart'
@@ -46,6 +47,7 @@ function PublicApp() {
         </Routes>
       </AnimatePresence>
       <BottomNav />
+      {!location.pathname.startsWith('/estrella') && <IosInstallHint />}
     </div>
   )
 }

@@ -1,5 +1,5 @@
 import { motion } from 'motion/react'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Navigate, NavLink, Route, Routes } from 'react-router-dom'
 import { Icon, type IconName } from '../components/Icon'
 import { useAppData } from '../context/AppData'
@@ -102,6 +102,14 @@ function Shell() {
 
 export default function AdminApp() {
   const { data } = useAppData()
+  // El panel siempre va en español y de izquierda a derecha, aunque el cliente haya elegido otro idioma.
+  useEffect(() => {
+    const root = document.documentElement
+    const prev = { lang: root.lang, dir: root.dir }
+    root.lang = 'es'
+    root.dir = 'ltr'
+    return () => { root.lang = prev.lang; root.dir = prev.dir }
+  }, [])
   return (
     <AdminProvider>
       <ThemeApplier theme={data?.settings.theme} />

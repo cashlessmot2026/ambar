@@ -20,7 +20,7 @@ export function BottomNav() {
   const { t } = useI18n()
   const tabs = TABS.filter((tab) => !tab.ordering || isOrderingEnabled(data?.settings))
   return (
-    <nav className="nav" aria-label={t('nav.main')} style={{ gridTemplateColumns: `repeat(${tabs.length}, 1fr)` }}>
+    <nav className="nav" aria-label={t('nav.main')} style={{ '--tabs': tabs.length } as React.CSSProperties}>
       {tabs.map((tab) => (
         <NavLink key={tab.to} to={tab.to} end={tab.to === '/'} className={({ isActive }) => (isActive ? 'active' : '')}>
           {({ isActive }) => (

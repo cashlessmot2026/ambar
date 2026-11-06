@@ -20,7 +20,7 @@
 @keyframes shine { 0%, 60% { transform: translateX(-40%); } 100% { transform: translateX(40%); } }
 .loyalty-top { display: flex; align-items: center; justify-content: space-between; position: relative; }
 .loyalty-logo { width: 46px; height: 46px; object-fit: contain; }
-.loyalty-brand { text-align: right; line-height: 1; font-family: var(--font-heading); }
+.loyalty-brand { text-align: end; line-height: 1; font-family: var(--font-heading); }
 .loyalty-brand span { display: block; font-size: 10px; letter-spacing: 0.3em; color: var(--muted); }
 .loyalty-brand strong { font-size: 22px; letter-spacing: 0.18em; color: var(--gold); }
 .loyalty-mid { display: flex; align-items: center; gap: 10px; position: relative; }
