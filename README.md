@@ -1,6 +1,10 @@
 # Ámbar Steak House — PWA
 
-App web instalable (PWA) de **Ámbar Steak House** (Punta Hansa, San Andrés): landing con video y galería, dos menús digitales priorizados por la hora, pedidos (panel + WhatsApp), reseñas en Google y Tripadvisor, tarjeta de fidelización con estrellas por QR/NFC y panel de administración oculto.
+App web instalable (PWA) de **Ámbar Steak House** (Punta Hansa, San Andrés): landing con video y galería, dos menús digitales priorizados por la hora, pedidos (panel + WhatsApp) que se pueden desactivar (modo solo menú), reseñas en Google y Tripadvisor, tarjeta de fidelización con estrellas por QR/NFC y panel de administración oculto.
+
+Publicada en **https://cashlessmot2026.github.io/ambar/** (GitHub Pages; se despliega sola en cada push a `main` con `.github/workflows/deploy.yml`).
+
+**Idiomas:** español, inglés, alemán, ruso, portugués (Brasil), italiano, francés, mandarín, coreano y árabe (de derecha a izquierda). Se detecta el idioma del teléfono y hay un selector 🌐.
 
 ## Stack
 
@@ -42,10 +46,28 @@ node scripts/db.mjs supabase/migrations/002_functions.sql
 node scripts/db.mjs supabase/migrations/003_seed.sql     # ⚠️ recrea los menús 'desayuno' y 'ambar' (borra cambios hechos en el panel)
 node scripts/db.mjs supabase/migrations/004_storage.sql
 node scripts/db.mjs supabase/migrations/005_hardening.sql
+node scripts/db.mjs supabase/migrations/006_i18n_ordering.sql
+node scripts/db.mjs supabase/migrations/007_i18n_data.sql      # traducciones del menú (volver a aplicar si se reaplica 003)
 
 # Pruebas de las RPC (todo se revierte):
 node scripts/db.mjs supabase/tests/rpc_test.sql --expect-error ALL_TESTS_PASSED
 ```
+
+## Traducciones
+
+- **Textos de la app:** `src/i18n/locales/<idioma>.ts`. `es.ts` define las claves; si falta una en otro idioma, TypeScript no compila y una prueba lo detecta.
+- **Platos, categorías, menús, premio y portada:** `supabase/i18n/<idioma>.json`, emparejados por el nombre en español. Después de editarlos:
+  ```bash
+  node scripts/build_i18n_sql.mjs                         # regenera 007_i18n_data.sql
+  node scripts/db.mjs supabase/migrations/007_i18n_data.sql
+  ```
+- **Desde el panel:** Menús (selector de idioma + pestañas en cada producto), Premios y Página → *Traducciones de textos*. Lo que quede vacío se muestra en español.
+- El mensaje de WhatsApp al restaurante siempre va en español e indica el idioma del cliente.
+
+## Instalación en el teléfono
+
+- **Android / Chrome:** botón *Instalar app* (ficha con capturas, accesos directos a Menú, Pedido y Tarjeta, ícono adaptable y monocromo).
+- **iPhone / iPad (Safari):** aparece una guía *Compartir → Agregar a inicio*. Incluye pantallas de arranque para cada modelo (`public/splash/`, generadas por `scripts/process_assets.py`).
 
 ## Tarjeta de fidelización (QR / NFC)
 
@@ -58,4 +80,4 @@ Cada escaneo suma 1 estrella. Si el cliente toca **Canjear** en su tarjeta, el s
 
 ## Assets
 
-`python scripts/process_assets.py` regenera el logo transparente, los iconos PWA y las imágenes del landing a partir de `logo.jpeg` y la carpeta `landing page/` (no incluida en el repo).
+`python scripts/process_assets.py` regenera el logo transparente, los iconos PWA (incluidos monocromo y accesos directos), las pantallas de arranque de iOS y las imágenes del landing a partir de `logo.jpeg` y la carpeta `landing page/` (no incluida en el repo).
