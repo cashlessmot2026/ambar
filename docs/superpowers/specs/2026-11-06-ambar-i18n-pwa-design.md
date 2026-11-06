@@ -72,7 +72,21 @@ Fuera de alcance: traducir el panel admin (sigue en español), traducción autom
 - Tablet (≥ 768px): grilla de productos de 3 columnas, tarjeta de fidelización centrada con premios al lado, hojas modales centradas.
 - Escritorio (≥ 1024px): barra lateral (ya existe) y grilla de 4 columnas.
 
+## 6b. Activar / desactivar pedidos (modo solo menú)
+
+- `settings.data.ordering = { "enabled": true }` (por defecto activo; si falta la clave, se considera activo).
+- Panel admin → **Pedidos**: interruptor "Recibir pedidos" arriba de la lista; guarda al instante (`admin_set_ordering(token, enabled boolean)`, que solo cambia esa clave y no pisa el resto de `settings`).
+- Con pedidos desactivados, en la app pública:
+  - las tarjetas y filas del menú no muestran "Agregar";
+  - la pestaña "Pedido" desaparece de la barra de navegación (quedan Inicio, Menú y Tarjeta);
+  - si alguien entra a `/#/pedido` (o tenía productos en el carrito), ve "Por ahora solo mostramos el menú. Pídenos directamente en el restaurante." con botón al menú; el carrito se conserva para cuando se reactive;
+  - la tarjeta de fidelización y el escaneo de estrellas siguen funcionando.
+- Servidor: `place_order` lanza `ordering_disabled` si `settings.data->'ordering'->>'enabled' = 'false'` (no se puede saltar desde el navegador).
+- El cambio llega a los clientes la próxima vez que la app recargue los datos (al abrirla o volver a ella).
+
 ## 7. Pruebas
+
+- Pedidos desactivados: SQL `place_order` → `ordering_disabled` y `admin_set_ordering` no altera otras claves de settings; Vitest `isOrderingEnabled(settings)` (ausente → true); navegador: con el interruptor apagado no aparece "Agregar" ni la pestaña Pedido.
 
 - Vitest: detección de idioma (`pt-PT→pt`, `zh-TW→zh`, `ar-EG→ar`, `xx→es`, preferencia guardada gana); `t()` interpola y cae a español; todas las claves de los 10 diccionarios no vacías; `localized()` con traducción, vacía y ausente; WhatsApp incluye "Idioma del cliente".
 - SQL (`rpc_test.sql`): `get_public_data` devuelve `i18n` en productos; `admin_upsert` guarda `i18n`.
