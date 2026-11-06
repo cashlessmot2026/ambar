@@ -1,6 +1,10 @@
 import { AnimatePresence, motion } from 'motion/react'
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { Icon } from '../components/Icon'
+import { isIos } from '../components/IosInstallHint'
+import { ScanSheet } from '../components/StarScanner'
+import { useNavigate } from 'react-router-dom'
+import { nfcSupported } from '../lib/nfc'
 import { LoyaltyCard } from '../components/LoyaltyCard'
 import { RegisterModal } from '../components/RegisterModal'
 import { TopBar } from '../components/TopBar'
@@ -15,6 +19,15 @@ export default function Card() {
   const { data } = useAppData()
   const { customer, token, ready, refresh, setCustomer } = useCustomer()
   const { t, lang } = useI18n()
+  const navigate = useNavigate()
+  const [scan, setScan] = useState<'qr' | 'nfc' | null>(null)
+  const canNfc = nfcSupported()
+  const ios = typeof navigator !== 'undefined' && isIos(navigator.userAgent, navigator.maxTouchPoints ?? 0)
+  // Al leer la clave se reutiliza el flujo de /estrella (suma o canje + fuegos artificiales).
+  const onKey = useCallback((key: string) => {
+    setScan(null)
+    navigate(`/estrella?k=${encodeURIComponent(key)}`)
+  }, [navigate])
   const [registerOpen, setRegisterOpen] = useState(false)
   const [busy, setBusy] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -70,6 +83,22 @@ export default function Card() {
               <div className="muted upper" style={{ fontSize: 12, fontWeight: 700 }}>{t(customer.stars === 1 ? 'card.starOne' : 'card.starMany')}</div>
             </div>
 
+            <section className="section card scan-box">
+              <h2 className="scan-title"><Icon name="star" filled /> {t('scan.title')}</h2>
+              <p className="muted">{t('scan.hint')}</p>
+              <div className="scan-actions">
+                <motion.button className="btn solid" whileTap={{ scale: 0.95 }} whileHover={{ scale: 1.03 }} onClick={() => setScan('qr')}>
+                  <Icon name="qr" /> {t('scan.camera')}
+                </motion.button>
+                {canNfc && (
+                  <motion.button className="btn" whileTap={{ scale: 0.95 }} whileHover={{ scale: 1.03 }} onClick={() => setScan('nfc')}>
+                    <Icon name="nfc" /> {t('scan.nfc')}
+                  </motion.button>
+                )}
+              </div>
+              {!canNfc && <p className="muted scan-note"><Icon name="nfc" /> {t(ios ? 'scan.nfcIos' : 'scan.nfcUnsupported')}</p>}
+            </section>
+
             <AnimatePresence>
               {pending && (
                 <motion.div className="pending section" initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }}>
@@ -124,6 +153,7 @@ export default function Card() {
           </>
         )}
       </div>
+      <ScanSheet mode={scan} onKey={onKey} onClose={() => setScan(null)} />
       <RegisterModal open={registerOpen} onClose={() => setRegisterOpen(false)} onDone={() => setRegisterOpen(false)} reason={t('card.registerReason')} />
     </>
   )

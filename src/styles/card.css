@@ -54,3 +54,31 @@
 .claim { min-height: 70dvh; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: 10px; padding: 24px 16px; }
 .claim .big-star { width: 140px; height: 140px; color: var(--gold); filter: drop-shadow(0 0 30px color-mix(in srgb, var(--gold) 70%, transparent)); }
 .claim h1 { font-size: 28px; text-transform: uppercase; }
+
+/* ───────── Sumar estrella: cámara / NFC ───────── */
+.scan-box { padding: 16px; text-align: center; border-color: color-mix(in srgb, var(--gold) 40%, var(--border)); }
+.scan-title { display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 17px; }
+.scan-title svg { width: 20px; height: 20px; color: var(--gold); }
+.scan-box > p { margin: 6px 0 14px; font-size: 13px; }
+.scan-actions { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
+.scan-actions .btn { flex: 1 1 160px; }
+.scan-note { font-size: 12px !important; margin: 12px 0 0 !important; }
+.scan-note svg { width: 14px; height: 14px; vertical-align: -2px; color: var(--gold); }
+
+.scan-sheet { position: fixed; inset: 0; z-index: 120; background: #000; }
+.scanner { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+.scanner-video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.scanner-frame {
+  position: relative; width: min(70vw, 300px); aspect-ratio: 1; border-radius: 28px;
+  box-shadow: 0 0 0 100vmax rgba(0, 0, 0, 0.55); border: 3px solid var(--gold); overflow: hidden;
+}
+.scanner-line { position: absolute; inset-inline: 8%; height: 3px; border-radius: 3px; background: linear-gradient(90deg, transparent, var(--gold), transparent); box-shadow: 0 0 14px var(--gold); }
+.scanner-msg {
+  position: absolute; inset-inline: 20px; top: calc(24px + var(--safe-t)); z-index: 2;
+  text-align: center; font-weight: 600; padding: 10px 16px; border-radius: 16px; background: rgba(0, 0, 0, 0.6);
+}
+.scanner-close { position: absolute; bottom: calc(28px + var(--safe-b)); z-index: 2; }
+.scanner.nfc { background: radial-gradient(circle at 50% 45%, color-mix(in srgb, var(--gold) 20%, transparent), #000 60%); }
+.scanner.nfc .scanner-msg { position: static; margin-top: 28px; max-width: 320px; background: transparent; }
+.nfc-pulse { width: 140px; height: 140px; border-radius: 50%; display: grid; place-items: center; border: 3px solid var(--gold); color: var(--gold); }
+.nfc-pulse svg { width: 64px; height: 64px; }

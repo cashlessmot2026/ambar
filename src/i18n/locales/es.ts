@@ -166,6 +166,20 @@ export const es = {
   'privacy.securityTitle': 'Seguridad y conservación',
   'privacy.security': 'Tus datos se almacenan en servidores con acceso restringido y no se venden ni se comparten con terceros, salvo obligación legal. Se conservan mientras participes en el programa o hasta que solicites su supresión.',
   'privacy.version': 'Versión v1 · noviembre de 2026.',
+  'scan.title': 'Suma tu estrella',
+  'scan.hint': 'Estás en Ámbar: escanea el QR o lee el tag NFC del restaurante.',
+  'scan.camera': 'Escanear QR',
+  'scan.nfc': 'Leer tag NFC',
+  'scan.aim': 'Apunta la cámara al código QR de Ámbar',
+  'scan.notAmbar': 'Este código no es de Ámbar. Busca el QR oficial del restaurante.',
+  'scan.denied': 'Permite el acceso a la cámara en los ajustes del navegador para escanear.',
+  'scan.noCamera': 'No encontramos una cámara en este dispositivo.',
+  'scan.cameraError': 'No pudimos abrir la cámara. Inténtalo de nuevo.',
+  'scan.nfcWaiting': 'Acerca la parte trasera del celular al tag NFC de Ámbar…',
+  'scan.nfcIos': 'En iPhone: acerca la parte superior del teléfono al tag NFC. Se abrirá Ámbar y sumará tu estrella.',
+  'scan.nfcUnsupported': 'Este navegador no puede leer NFC. Usa el QR o acerca el teléfono al tag con la pantalla desbloqueada.',
+  'scan.nfcError': 'No pudimos leer el tag. Inténtalo de nuevo.',
+  'scan.cancel': 'Cancelar',
 } as const
 
 export type Key = keyof typeof es
