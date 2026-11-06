@@ -46,6 +46,7 @@ export const ru: Dict = {
   'product.top': 'Хит',
   'product.morePhotos': '+{n} фото',
   'product.viewPhotos': 'Фото: {name}',
+  'product.viewDetails': 'Подробнее: {name}',
 
   'cart.title': 'ЗАКАЗ',
   'cart.emptyTitle': 'Ваш заказ пуст',

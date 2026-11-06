@@ -6,8 +6,19 @@
 .hero-top {
   position: absolute; z-index: 3;
   top: calc(12px + env(safe-area-inset-top, 0px));
-  inset-inline-end: calc(12px + env(safe-area-inset-right, 0px));
+  inset-inline: calc(12px + env(safe-area-inset-left, 0px)) calc(12px + env(safe-area-inset-right, 0px));
+  display: flex; align-items: center; justify-content: space-between; gap: 8px;
 }
+.hero-reviews { display: flex; gap: 6px; min-width: 0; }
+.review-pill {
+  display: inline-flex; align-items: center; gap: 6px; height: 38px; padding: 0 12px; border-radius: 999px;
+  background: rgba(0, 0, 0, 0.45); border: 1px solid rgba(255, 255, 255, 0.18); backdrop-filter: blur(10px);
+  color: #fff; font-size: 12px; font-weight: 700; white-space: nowrap;
+}
+.review-pill svg { width: 16px; height: 16px; flex: none; }
+.review-pill .star, .review-pill svg:last-child:not(:first-child) { color: #FBBC05; }
+.review-pill.trip svg { color: #34E0A1; }
+@media (max-width: 380px) { .review-pill { padding: 0 9px; font-size: 11px; } .review-pill span { display: none; } }
 .hero-top .lang-btn { background: rgba(0, 0, 0, 0.45); border-color: rgba(255, 255, 255, 0.18); backdrop-filter: blur(10px); }
 .lang-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 8px; }
 .lang-opt {

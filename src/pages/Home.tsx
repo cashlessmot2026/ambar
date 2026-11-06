@@ -47,6 +47,18 @@ export default function Home() {
           <img className="hero-fallback" src={mediaUrl(landing.images[0])} alt="" />
         )}
         <div className="hero-top">
+          <div className="hero-reviews">
+            {contact.google_review_url && (
+              <a className="review-pill" href={contact.google_review_url} target="_blank" rel="noreferrer" aria-label={t('thanks.google')}>
+                <GoogleLogo /> <span>Google</span> <Icon name="star" filled />
+              </a>
+            )}
+            {contact.tripadvisor_url && (
+              <a className="review-pill trip" href={contact.tripadvisor_url} target="_blank" rel="noreferrer" aria-label={t('thanks.trip')}>
+                <Icon name="owl" /> <span>Tripadvisor</span>
+              </a>
+            )}
+          </div>
           <LangPicker />
         </div>
         <div className="hero-content">
@@ -183,5 +195,16 @@ export default function Home() {
         onClose={() => setOpen(null)}
       />
     </>
+  )
+}
+
+function GoogleLogo() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path fill="#4285F4" d="M23 12.3c0-.8-.1-1.6-.2-2.3H12v4.4h6.2a5.3 5.3 0 0 1-2.3 3.5v2.9h3.7c2.2-2 3.4-5 3.4-8.5z" />
+      <path fill="#34A853" d="M12 23.5c3.1 0 5.7-1 7.6-2.8l-3.7-2.9c-1 .7-2.3 1.1-3.9 1.1-3 0-5.5-2-6.4-4.7H1.8v3A11.5 11.5 0 0 0 12 23.5z" />
+      <path fill="#FBBC05" d="M5.6 14.2a6.9 6.9 0 0 1 0-4.4v-3H1.8a11.5 11.5 0 0 0 0 10.4z" />
+      <path fill="#EA4335" d="M12 5c1.7 0 3.2.6 4.4 1.7l3.3-3.3A11.5 11.5 0 0 0 1.8 6.8l3.8 3C6.5 7 9 5 12 5z" />
+    </svg>
   )
 }

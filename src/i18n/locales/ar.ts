@@ -46,6 +46,7 @@ export const ar: Dict = {
   'product.top': 'مميز',
   'product.morePhotos': '+{n} صور',
   'product.viewPhotos': 'عرض صور {name}',
+  'product.viewDetails': 'عرض تفاصيل {name}',
 
   'cart.title': 'الطلب',
   'cart.emptyTitle': 'طلبك فارغ',

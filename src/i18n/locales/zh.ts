@@ -46,6 +46,7 @@ export const zh: Dict = {
   'product.top': '推荐',
   'product.morePhotos': '+{n} 张照片',
   'product.viewPhotos': '查看 {name} 的照片',
+  'product.viewDetails': '查看 {name} 详情',
 
   'cart.title': '订单',
   'cart.emptyTitle': '您的订单是空的',

@@ -31,8 +31,6 @@
 .product .body { padding: 10px 12px 12px; display: flex; flex-direction: column; gap: 4px; flex: 1; }
 .product h3 { font-size: 14px; line-height: 1.25; }
 .product p { font-size: 12px; color: var(--muted); margin: 0; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
-.product .body.expandable { cursor: pointer; }
-.product p.open { display: block; -webkit-line-clamp: unset; overflow: visible; }
 .product .price { color: var(--gold); font-weight: 800; font-family: var(--font-heading); }
 .product .btn { margin-top: auto; }
 .product.hl { outline: 2px solid var(--gold); }
@@ -70,3 +68,19 @@
 .prose { color: #d4d4d8; font-size: 14px; }
 .prose h1 { font-size: 22px; margin: 18px 0 10px; }
 .prose h2 { font-size: 15px; margin: 18px 0 6px; color: var(--gold); text-transform: uppercase; letter-spacing: 0.05em; }
+
+/* ───────── Tarjeta ampliada ───────── */
+.tappable { cursor: pointer; }
+.detail-backdrop { position: fixed; inset: 0; z-index: 90; background: rgba(0, 0, 0, 0.78); backdrop-filter: blur(8px); display: grid; place-items: center; padding: 16px; }
+.detail-card { position: relative; width: min(100%, 460px); max-height: 90dvh; overflow-y: auto; overscroll-behavior: contain; background: var(--surface); border: 1px solid var(--gold); border-radius: var(--radius); box-shadow: 0 24px 80px rgba(0, 0, 0, 0.6), 0 0 0 4px color-mix(in srgb, var(--gold) 18%, transparent); }
+.detail-close { position: absolute; top: 10px; inset-inline-end: 10px; z-index: 2; background: rgba(0, 0, 0, 0.55); backdrop-filter: blur(8px); }
+.detail-media { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; aspect-ratio: 4 / 3; background: var(--surface-2); position: relative; scrollbar-width: none; }
+.detail-media::-webkit-scrollbar { display: none; }
+.detail-media > img, .detail-media > svg { flex: 0 0 100%; width: 100%; height: 100%; object-fit: cover; scroll-snap-align: center; }
+.detail-media .tag { position: absolute; top: 10px; inset-inline-start: 10px; background: var(--gold); color: #141414; font-size: 10px; font-weight: 800; padding: 3px 8px; border-radius: 99px; text-transform: uppercase; letter-spacing: 0.06em; }
+.detail-hint { display: block; text-align: center; font-size: 11px; color: var(--muted); padding-top: 8px; }
+.detail-body { padding: 16px 18px 20px; display: flex; flex-direction: column; gap: 8px; }
+.detail-body h3 { font-size: 20px; line-height: 1.2; }
+.detail-body .price { color: var(--gold); font-weight: 800; font-size: 18px; font-family: var(--font-heading); }
+.detail-body p { margin: 0; font-size: 14px; line-height: 1.55; color: var(--muted); white-space: pre-line; }
+.detail-body .btn { margin-top: 8px; }

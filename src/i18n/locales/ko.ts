@@ -46,6 +46,7 @@ export const ko: Dict = {
   'product.top': '인기',
   'product.morePhotos': '+{n}장',
   'product.viewPhotos': '{name} 사진 보기',
+  'product.viewDetails': '{name} 상세 보기',
 
   'cart.title': '주문',
   'cart.emptyTitle': '주문 내역이 비어 있습니다',

@@ -46,6 +46,7 @@ export const en: Dict = {
   'product.top': 'Top',
   'product.morePhotos': '+{n} photos',
   'product.viewPhotos': 'View photos of {name}',
+  'product.viewDetails': 'View details of {name}',
 
   'cart.title': 'ORDER',
   'cart.emptyTitle': 'Your order is empty',

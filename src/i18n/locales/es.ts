@@ -45,6 +45,7 @@ export const es = {
   'product.top': 'Top',
   'product.morePhotos': '+{n} fotos',
   'product.viewPhotos': 'Ver fotos de {name}',
+  'product.viewDetails': 'Ver detalles de {name}',
 
   'cart.title': 'PEDIDO',
   'cart.emptyTitle': 'Tu pedido está vacío',
