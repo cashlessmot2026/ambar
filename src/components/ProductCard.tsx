@@ -27,6 +27,7 @@ export function ProductCard({ product, highlight, canOrder = true }: { product: 
   const description = localized(product, 'description', lang)
   const onAdd = useAdd(product, name)
   const [open, setOpen] = useState(false)
+  const [expanded, setExpanded] = useState(false)
   const img = product.images[0]
   const layoutId = `product-${product.id}`
 
@@ -44,12 +45,21 @@ export function ProductCard({ product, highlight, canOrder = true }: { product: 
         {product.featured && <span className="tag">{t('product.top')}</span>}
         {product.images.length > 1 && <span className="count">{t('product.morePhotos', { n: product.images.length - 1 })}</span>}
       </button>
-      <div className="body">
+      <div
+        className={`body${description ? ' expandable' : ''}`}
+        role={description ? 'button' : undefined}
+        tabIndex={description ? 0 : undefined}
+        aria-expanded={description ? expanded : undefined}
+        onClick={() => description && setExpanded((v) => !v)}
+        onKeyDown={(e) => {
+          if (description && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); setExpanded((v) => !v) }
+        }}
+      >
         <h3>{name}</h3>
-        {description && <p>{description}</p>}
+        {description && <p className={expanded ? 'open' : undefined}>{description}</p>}
         <span className="price">{formatCOP(product.price)}</span>
         {canOrder && (
-          <motion.button className="btn solid sm block" whileTap={{ scale: 0.94 }} whileHover={{ scale: 1.03 }} onClick={onAdd}>
+          <motion.button className="btn solid sm block" whileTap={{ scale: 0.94 }} whileHover={{ scale: 1.03 }} onClick={(e) => { e.stopPropagation(); onAdd() }}>
             <Icon name="plus" /> {t('product.add')}
           </motion.button>
         )}
