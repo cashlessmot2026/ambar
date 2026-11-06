@@ -22,3 +22,12 @@ describe('errorMessage', () => {
     expect(errorMessage(new ApiError('phone_in_use'))).toMatch(/mismo nombre/i)
   })
 })
+
+describe('api.admin.setOrdering', () => {
+  it('llama a admin_set_ordering con el token y el valor', async () => {
+    const spy = vi.spyOn(supabase, 'rpc').mockResolvedValue({ data: { ordering: { enabled: false } }, error: null } as never)
+    const s = await api.admin.setOrdering('tok', false)
+    expect(spy).toHaveBeenCalledWith('admin_set_ordering', { p_token: 'tok', p_enabled: false })
+    expect(s.ordering?.enabled).toBe(false)
+  })
+})

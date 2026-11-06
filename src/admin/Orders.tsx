@@ -2,7 +2,9 @@ import { AnimatePresence, motion } from 'motion/react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Icon } from '../components/Icon'
 import { api, errorMessage } from '../lib/api'
+import { useAppData } from '../context/AppData'
 import { formatCOP } from '../lib/format'
+import { isOrderingEnabled } from '../lib/ordering'
 import type { AdminOrder } from '../lib/types'
 import { useAdmin } from './useAdmin'
 
@@ -13,7 +15,10 @@ const time = (iso: string) =>
   new Date(iso).toLocaleString('es-CO', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })
 
 export default function Orders() {
-  const { run } = useAdmin()
+  const { run, data, reload } = useAdmin()
+  const pub = useAppData()
+  const [savingToggle, setSavingToggle] = useState(false)
+  const ordering = isOrderingEnabled(data?.settings)
   const [orders, setOrders] = useState<AdminOrder[] | null>(null)
   const [filter, setFilter] = useState<'activos' | AdminOrder['status'] | 'todos'>('activos')
   const [error, setError] = useState<string | null>(null)
@@ -52,6 +57,20 @@ export default function Orders() {
     }
   }
 
+  async function toggleOrdering(enabled: boolean) {
+    setSavingToggle(true)
+    setError(null)
+    try {
+      await run((t) => api.admin.setOrdering(t, enabled))
+      await reload()
+      void pub.reload()
+    } catch (e) {
+      setError(errorMessage(e))
+    } finally {
+      setSavingToggle(false)
+    }
+  }
+
   const shown = (orders ?? []).filter((o) =>
     filter === 'todos' ? true : filter === 'activos' ? o.status === 'nuevo' || o.status === 'preparando' : o.status === filter,
   )
@@ -63,6 +82,20 @@ export default function Orders() {
         <h1 className="grow" style={{ margin: 0 }}>Pedidos</h1>
         <span className="muted" style={{ fontSize: 13 }}>Hoy: {today.length} · {formatCOP(today.reduce((n, o) => n + o.total, 0))}</span>
         <button className="mini" onClick={() => void load()} aria-label="Actualizar"><Icon name="download" /></button>
+      </div>
+      <div className={`card ordering-toggle${ordering ? ' on' : ''}`}>
+        <div style={{ flex: 1 }}>
+          <strong>Recibir pedidos por la app</strong>
+          <small className="muted">
+            {ordering
+              ? 'Activo: los clientes pueden pedir y llegan aquí y a WhatsApp.'
+              : 'Desactivado: los clientes solo ven el menú (sin botón Agregar ni pestaña Pedido).'}
+          </small>
+        </div>
+        <label className="switch-big" aria-label="Recibir pedidos por la app">
+          <input type="checkbox" checked={ordering} disabled={savingToggle || !data} onChange={(e) => void toggleOrdering(e.target.checked)} />
+          <span className="track"><motion.span className="thumb" layout transition={{ type: 'spring', stiffness: 500, damping: 30 }} /></span>
+        </label>
       </div>
       <div className="seg" style={{ marginBottom: 14 }}>
         {(['activos', ...STATUSES, 'todos'] as const).map((s) => (

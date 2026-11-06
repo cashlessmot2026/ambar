@@ -27,7 +27,8 @@ const MESSAGES: Record<string, string> = {
   not_enough_stars: 'Aún no tienes estrellas suficientes.',
   invalid_password: 'Contraseña incorrecta.',
   too_many_attempts: 'Demasiados intentos fallidos. Espera 15 minutos e inténtalo de nuevo.',
-  phone_in_use: 'Este teléfono ya tiene una Tarjeta Ámbar. Escribe el mismo nombre con el que te registraste.',
+  ordering_disabled: 'Los pedidos por la app están desactivados.',
+  phone_in_use:'Este teléfono ya tiene una Tarjeta Ámbar. Escribe el mismo nombre con el que te registraste.',
   password_too_short: 'La nueva contraseña debe tener al menos 4 caracteres.',
   unauthorized: 'Tu sesión de administrador expiró.',
   network: 'Sin conexión. Revisa tu internet e inténtalo de nuevo.',
@@ -85,6 +86,8 @@ export const api = {
     remove: (t: string, table: 'menus' | 'categories' | 'products' | 'rewards', id: string) =>
       rpc<void>('admin_delete', { p_token: t, p_table: table, p_id: id }),
     saveSettings: (t: string, data: Settings) => rpc<Settings>('admin_save_settings', { p_token: t, p_data: data }),
+    /** Activa o desactiva los pedidos por la app (modo solo menú). Solo cambia esa clave de settings. */
+    setOrdering: (t: string, enabled: boolean) => rpc<Settings>('admin_set_ordering', { p_token: t, p_enabled: enabled }),
     changePassword: (t: string, oldPw: string, newPw: string) =>
       rpc<void>('admin_change_password', { p_token: t, p_old: oldPw, p_new: newPw }),
   },
