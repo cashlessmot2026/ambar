@@ -79,66 +79,89 @@ Deno.serve(async (req) => {
     cache = { at: Date.now(), menus: data.menus as Menu[], business: data.settings?.business?.name ?? 'Ámbar' }
   }
 
+  // Hora de la isla: decide qué menús están abiertos ahora.
+  const bogota = new Date(Date.now() - 5 * 3600_000)
+  const hhmm = bogota.toISOString().slice(11, 16)
+  const openNow = (m: Menu) => (m.start_time <= m.end_time
+    ? hhmm >= m.start_time && hhmm <= m.end_time
+    : hhmm >= m.start_time || hhmm <= m.end_time)
+
   // Referencias cortas (p1, p2…) para que el modelo no invente IDs largos.
   const refs = new Map<string, Product>()
   const byId = new Map<string, string>()
   const all: Product[] = []
   const menuText = cache.menus.map((m) => {
-    const cats = m.categories.map((c) => {
+    const cats = m.categories.filter((c) => c.products.length).map((c) => {
       const items = c.products.map((p) => {
         const ref = `p${refs.size + 1}`
         refs.set(ref, p)
         byId.set(p.id, ref)
         all.push(p)
-        return `  - [${ref}] ${p.name} · ${cop(p.price)}${p.description ? ` · ${p.description.slice(0, 160)}` : ''}`
+        return `  - [${ref}] ${p.name} — ${cop(p.price)}${p.featured ? ' ★destacado' : ''}${p.description ? ` — ${p.description.replace(/\s+/g, ' ').slice(0, 220)}` : ''}`
       })
-      return ` ${c.name}:\n${items.join('\n')}`
+      return ` ## ${c.name}\n${items.join('\n')}`
     })
-    return `MENÚ "${m.name}"${m.subtitle ? ` (${m.subtitle})` : ''} · disponible ${m.start_time}–${m.end_time}\n${cats.join('\n')}`
+    const state = openNow(m) ? 'ABIERTO AHORA' : 'CERRADO AHORA (solo se puede pedir en su horario)'
+    return `# MENÚ "${m.name}"${m.subtitle ? ` (${m.subtitle})` : ''} · horario ${m.start_time}–${m.end_time} · ${state}\n${cats.join('\n')}`
   }).join('\n\n')
 
   const pick = dailyPick(all)
+  const pickRef = pick ? byId.get(pick.id) : null
   const cart = (body.cart ?? []).slice(0, 60)
     .map((i) => { const ref = byId.get(i.product_id); return ref ? `${i.qty}× [${ref}] ${refs.get(ref)!.name}` : null })
     .filter(Boolean)
   const lang = LANG_NAMES[body.lang ?? 'es'] ?? 'español'
-  const now = new Date().toLocaleString('es-CO', { timeZone: 'America/Bogota', weekday: 'long', hour: '2-digit', minute: '2-digit' })
+  const now = bogota.toLocaleString('es-CO', { timeZone: 'UTC', weekday: 'long', hour: '2-digit', minute: '2-digit' })
+  const pickMentioned = !!pick && messages.some((m) => m.role === 'model' && m.text.toLowerCase().includes(pick.name.toLowerCase()))
 
-  const system = `Eres "Tu mesero IA" de ${cache.business}, un steak house en San Andrés Isla, Colombia.
-Hablas como un mesero cálido, elegante y breve (máximo 3 o 4 frases). Responde SIEMPRE en ${lang}.
-Objetivo: ayudar a elegir y aumentar la venta de forma amable:
-- Sugiere acompañamientos, bebidas, entradas o postres que combinen con lo que el cliente eligió o pregunta.
-- Menciona con entusiasmo el RECOMENDADO DEL DÍA cuando sea natural${pick ? `: [${byId.get(pick.id)}] ${pick.name} (${cop(pick.price)})` : ''}.
-- Solo puedes recomendar productos que estén en la carta de abajo, con su precio exacto. Nunca inventes platos, precios ni promociones.
-- Si preguntan algo que no está en la carta (alergias, ingredientes no listados) di que lo confirme con el personal.
-- No tomes pedidos tú mismo: invita a tocar "Agregar" en los productos sugeridos y luego confirmar en la pestaña Pedido.
-Hora actual en la isla: ${now}. Ten en cuenta el horario de cada menú.
-${cart.length ? `El cliente ya tiene en su pedido:\n${cart.join('\n')}` : 'El cliente aún no tiene productos en su pedido.'}
+  const system = `Eres el mesero estrella de ${cache.business}, steak house frente al mar en San Andrés Isla, Colombia.
+Atiendes por chat a un cliente que mira la carta en su celular. Conoces cada plato de memoria y vendes con calidez, como en el salón.
 
-CARTA:
+IDIOMA: responde siempre en ${lang}, aunque la carta esté en español (traduce el nombre si ayuda, pero conserva el nombre original).
+
+CÓMO RESPONDES (esto es lo más importante):
+1. Siempre propones platos CONCRETOS de la carta: entre 2 y 3 opciones con su nombre exacto y precio, y una razón corta y antojable para cada una (corte, ahumado, tamaño, para cuántos).
+2. Lees bien la intención: "para compartir" → picadas, entradas o platos grandes; "para 2" → porciones para compartir o dos fuertes; "algo ligero" → ensaladas o entradas; "bebidas/postres" → de esas categorías; "desayuno" → solo del menú de desayuno.
+3. Vendes más con naturalidad: si eligió un fuerte, ofrece un acompañamiento o adición y una bebida que combine; si ya tiene fuerte y bebida, ofrece un postre. Nunca repitas lo que ya tiene en su pedido.
+4. ${pick && !pickMentioned ? `Menciona una vez el RECOMENDADO DEL DÍA [${pickRef}] ${pick.name} (${cop(pick.price)}) como sugerencia del chef cuando encaje.` : 'Ya mencionaste el recomendado del día; no lo repitas salvo que pregunten.'}
+5. Si un menú está CERRADO AHORA, no lo ofrezcas para pedir ya; puedes decir a qué hora abre.
+6. Termina con UNA pregunta corta que ayude a decidir (punto del corte, para cuántas personas, si quiere bebida…).
+7. Formato: texto plano, sin markdown ni asteriscos. Máximo ~90 palabras. Cada opción en su propia línea empezando con "• ".
+8. Solo existe lo que está en la CARTA. Nunca inventes platos, precios, ingredientes, promociones ni tiempos de preparación. Si preguntan por alergias o ingredientes que no aparecen, sugiere confirmarlo con el personal.
+9. No confirmas pedidos: el cliente toca "+" en las tarjetas que aparecen bajo tu mensaje y confirma en la pestaña Pedido.
+
+Ahora en la isla es ${now}.
+${cart.length ? `PEDIDO ACTUAL DEL CLIENTE:\n${cart.join('\n')}` : 'El cliente aún no tiene productos en su pedido.'}
+
+CARTA (cada plato tiene una referencia [pN]):
 ${menuText}
 
-Responde en JSON: "reply" (texto para el cliente, sin las referencias [pN]) y "products" (las referencias pN que sugieres, máximo 4, en orden).`
+SALIDA: un objeto JSON con
+- "reply": el mensaje para el cliente (sin las referencias [pN]).
+- "products": las referencias pN de TODOS los platos que mencionas en "reply", en el mismo orden (máximo 4).`
 
   const payload = JSON.stringify({
-      systemInstruction: { parts: [{ text: system }] },
-      contents: messages.map((m) => ({ role: m.role, parts: [{ text: m.text }] })),
-      generationConfig: {
-        temperature: 0.7,
-        maxOutputTokens: 600,
-        responseMimeType: 'application/json',
-        responseSchema: {
-          type: 'OBJECT',
-          properties: { reply: { type: 'STRING' }, products: { type: 'ARRAY', items: { type: 'STRING' } } },
-          required: ['reply'],
-        },
+    systemInstruction: { parts: [{ text: system }] },
+    contents: messages.map((m) => ({ role: m.role, parts: [{ text: m.text }] })),
+    generationConfig: {
+      temperature: 0.6,
+      // Los modelos Gemini 3 "piensan" antes de responder y eso gasta del mismo límite: con 600 la respuesta
+      // llegaba cortada a la mitad. Se baja el razonamiento y se sube el límite.
+      maxOutputTokens: 4096,
+      thinkingConfig: { thinkingLevel: 'low' },
+      responseMimeType: 'application/json',
+      responseSchema: {
+        type: 'OBJECT',
+        properties: { reply: { type: 'STRING' }, products: { type: 'ARRAY', items: { type: 'STRING' } } },
+        required: ['reply', 'products'],
       },
+    },
   })
 
   // Google retira modelos con frecuencia: se prueba el configurado y, si no existe o no responde a tiempo,
   // los siguientes de la lista.
   const models = [...new Set([Deno.env.get('GEMINI_MODEL'), ...FALLBACK_MODELS].filter((m): m is string => !!m))]
-  let out: { candidates?: { content?: { parts?: { text?: string }[] } }[] } | null = null
+  let out: { candidates?: { finishReason?: string; content?: { parts?: { text?: string; thought?: boolean }[] } }[] } | null = null
   for (const model of models) {
     try {
       const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
@@ -158,15 +181,44 @@ Responde en JSON: "reply" (texto para el cliente, sin las referencias [pN]) y "p
     }
   }
   if (!out) return json({ error: 'ai_failed' }, 502)
-  const raw = out?.candidates?.[0]?.content?.parts?.map((p: { text?: string }) => p.text ?? '').join('') ?? ''
-  let parsed: { reply?: string; products?: string[] } = {}
-  try { parsed = JSON.parse(raw) } catch { parsed = { reply: raw } }
-  const products = (parsed.products ?? [])
-    .map((r) => refs.get(String(r).replace(/[[\]\s]/g, ''))?.id)
-    .filter((id): id is string => !!id)
-    .filter((id, i, a) => a.indexOf(id) === i)
-    .slice(0, 4)
-  const reply = String(parsed.reply ?? '').replace(/\s*\[p\d+\]\s*/g, ' ').trim()
+  const cand = out.candidates?.[0]
+  if (cand?.finishReason && cand.finishReason !== 'STOP') console.error('gemini finishReason', cand.finishReason)
+  // Se ignoran las partes de "pensamiento" del modelo.
+  const raw = (cand?.content?.parts ?? []).filter((p) => !p.thought).map((p) => p.text ?? '').join('')
+  const parsed = parseAnswer(raw)
+
+  // Productos: los que el modelo listó; si no listó ninguno (JSON cortado), los que nombra en el texto
+  // como opción ("• Nombre"), para no confundir ingredientes con platos.
+  let ids = parsed.products.map((r) => refs.get(r.replace(/[[\]\s]/g, ''))?.id).filter((id): id is string => !!id)
+  if (!ids.length) {
+    const bullets = parsed.reply.split('\n').filter((l) => l.trim().startsWith('•')).map((l) => l.toLowerCase())
+    ids = all.filter((p) => bullets.some((l) => l.includes(p.name.toLowerCase()))).map((p) => p.id)
+  }
+  const products = ids.filter((id, i, a) => a.indexOf(id) === i).slice(0, 4)
+
+  const reply = parsed.reply
+    .replace(/\s*\[p\d+\]/g, '')
+    .replace(/\*\*?([^*]+)\*\*?/g, '$1')
+    .replace(/[ \t]+\n/g, '\n')
+    .trim()
   if (!reply) return json({ error: 'ai_failed' }, 502)
   return json({ reply, products, recommended: pick?.id ?? null })
 })
+
+/** Lee {"reply","products"}; si el JSON llegó incompleto, rescata el texto de "reply" igual. */
+function parseAnswer(raw: string): { reply: string; products: string[] } {
+  const clean = raw.trim().replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '')
+  try {
+    const j = JSON.parse(clean)
+    return { reply: String(j.reply ?? ''), products: Array.isArray(j.products) ? j.products.map(String) : [] }
+  } catch { /* JSON incompleto */ }
+  const m = clean.match(/"reply"\s*:\s*"((?:[^"\\]|\\.)*)/s)
+  const products = [...clean.matchAll(/"(p\d+)"/g)].map((x) => x[1])
+  if (m) {
+    let reply = m[1]
+    try { reply = JSON.parse(`"${reply.replace(/\\$/, '')}"`) } catch { reply = reply.replace(/\\n/g, '\n').replace(/\\"/g, '"') }
+    return { reply, products }
+  }
+  // No parece JSON: es texto directo.
+  return { reply: clean.startsWith('{') ? '' : clean, products }
+}
