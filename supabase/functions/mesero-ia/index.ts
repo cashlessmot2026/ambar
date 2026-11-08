@@ -1,6 +1,7 @@
 // Edge Function: "Tu mesero IA" con Google Gemini.
 //
-// Secretos: GEMINI_API_KEY (obligatorio), GEMINI_MODEL (opcional, por defecto gemini-2.5-flash).
+// Secretos: GEMINI_API_KEY (obligatorio), GEMINI_MODEL (opcional; si falla se prueban gemini-3.6-flash,
+// gemini-3.5-flash y gemini-3.1-flash-lite).
 // SUPABASE_URL y SUPABASE_SERVICE_ROLE_KEY los pone Supabase automáticamente.
 //
 // Body: { messages: [{ role: 'user' | 'model', text }], cart: [{ product_id, qty }], lang }
@@ -47,6 +48,9 @@ const LANG_NAMES: Record<string, string> = {
 const cop = (n: number) => '$' + Math.round(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.')
 
 let cache: { at: number; menus: Menu[]; business: string } | null = null
+
+/** Modelos rápidos probados en orden (nov. 2026: gemini-2.5-flash ya no está disponible para llaves nuevas). */
+const FALLBACK_MODELS = ['gemini-3.6-flash', 'gemini-3.5-flash', 'gemini-3.1-flash-lite']
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders })
@@ -116,11 +120,7 @@ ${menuText}
 
 Responde en JSON: "reply" (texto para el cliente, sin las referencias [pN]) y "products" (las referencias pN que sugieres, máximo 4, en orden).`
 
-  const model = Deno.env.get('GEMINI_MODEL') || 'gemini-2.5-flash'
-  const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
-    body: JSON.stringify({
+  const payload = JSON.stringify({
       systemInstruction: { parts: [{ text: system }] },
       contents: messages.map((m) => ({ role: m.role, parts: [{ text: m.text }] })),
       generationConfig: {
@@ -133,13 +133,31 @@ Responde en JSON: "reply" (texto para el cliente, sin las referencias [pN]) y "p
           required: ['reply'],
         },
       },
-    }),
   })
-  if (!res.ok) {
-    console.error('gemini', res.status, await res.text())
-    return json({ error: 'ai_failed' }, 502)
+
+  // Google retira modelos con frecuencia: se prueba el configurado y, si no existe o no responde a tiempo,
+  // los siguientes de la lista.
+  const models = [...new Set([Deno.env.get('GEMINI_MODEL'), ...FALLBACK_MODELS].filter((m): m is string => !!m))]
+  let out: { candidates?: { content?: { parts?: { text?: string }[] } }[] } | null = null
+  for (const model of models) {
+    try {
+      const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
+        body: payload,
+        signal: AbortSignal.timeout(25_000),
+      })
+      if (res.ok) { out = await res.json(); break }
+      const detail = await res.text()
+      console.error('gemini', model, res.status, detail.slice(0, 300))
+      // Llave inválida o sin cuota: otro modelo no lo arregla.
+      if (res.status === 400 && /API key/i.test(detail)) break
+      if (res.status === 401 || res.status === 403) break
+    } catch (e) {
+      console.error('gemini', model, 'timeout/red', String(e))
+    }
   }
-  const out = await res.json()
+  if (!out) return json({ error: 'ai_failed' }, 502)
   const raw = out?.candidates?.[0]?.content?.parts?.map((p: { text?: string }) => p.text ?? '').join('') ?? ''
   let parsed: { reply?: string; products?: string[] } = {}
   try { parsed = JSON.parse(raw) } catch { parsed = { reply: raw } }
