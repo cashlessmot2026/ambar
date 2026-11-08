@@ -52,6 +52,7 @@ node scripts/db.mjs supabase/migrations/008_review_fixes.sql
 node scripts/db.mjs supabase/migrations/009_survey.sql           # encuesta de satisfacción
 node scripts/db.mjs supabase/migrations/010_accounts_reservations.sql  # cuentas con PIN, reservas, tiempo real, Mesero IA
 node scripts/db.mjs supabase/migrations/011_order_stars.sql      # cada pedido por la app suma 1 estrella (se quita si se cancela/elimina)
+node scripts/db.mjs supabase/migrations/012_category_active.sql  # categorías suspendibles (ocultas en la carta y no se pueden pedir)
 
 # Pruebas de las RPC (todo se revierte):
 node scripts/db.mjs supabase/tests/rpc_test.sql --expect-error ALL_TESTS_PASSED

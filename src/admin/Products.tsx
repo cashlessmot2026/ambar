@@ -12,13 +12,15 @@ import { useAdmin } from './useAdmin'
 import type { Lang } from '../i18n/I18n'
 
 type ProductDraft = Omit<Product, 'id' | 'sort'> & { id?: string; sort?: number; category_id: string }
+type CategoryDraft = { id?: string; menu_id: string; name: string; image: string | null; active: boolean; sort: number; i18n: Category['i18n'] }
 
 export default function Products() {
   const { data, run, reload } = useAdmin()
   const pub = useAppData()
   const [menuId, setMenuId] = useState<string | null>(null)
   const [draft, setDraft] = useState<ProductDraft | null>(null)
-  const [newCat, setNewCat] = useState('')
+  const [catDraft, setCatDraft] = useState<CategoryDraft | null>(null)
+  const [catLang, setCatLang] = useState<Lang>('es')
   // Idioma en el que se editan los textos de menús y categorías (los productos tienen sus propias pestañas).
   const [editLang, setEditLang] = useState<Lang>('es')
   const [draftLang, setDraftLang] = useState<Lang>('es')
@@ -57,6 +59,29 @@ export default function Products() {
     if (ok) setDraft(null)
   }
 
+  async function saveCategory() {
+    if (!catDraft) return
+    if (!catDraft.name.trim()) {
+      setCatLang('es')
+      setError('La categoría necesita un nombre.')
+      return
+    }
+    const ok = await op((t) => api.admin.upsert(t, 'categories', { ...catDraft, name: catDraft.name.trim() }),
+      catDraft.id ? 'Categoría guardada ✓' : 'Categoría creada ✓')
+    if (ok) setCatDraft(null)
+  }
+  const newCategory = (m: Menu) => {
+    setCatLang('es')
+    setCatDraft({ menu_id: m.id, name: '', image: null, active: true, sort: m.categories.length + 1, i18n: {} })
+  }
+  const editCategory = (c: Category, m: Menu) => {
+    setCatLang(editLang)
+    setCatDraft({ id: c.id, menu_id: c.menu_id ?? m.id, name: c.name, image: c.image, active: c.active !== false, sort: c.sort, i18n: c.i18n ?? {} })
+  }
+  const toggleCategory = (c: Category) =>
+    op((t) => api.admin.upsert(t, 'categories', { id: c.id, active: c.active === false }),
+      c.active === false ? 'Categoría activada ✓' : 'Categoría suspendida')
+
   const saveMenu = (m: Menu, patch: Partial<Menu>) =>
     op((t) => api.admin.upsert(t, 'menus', { id: m.id, ...patch }))
   /** Guarda un texto en el idioma de edición: campo base (es) o dentro de i18n. */
@@ -80,6 +105,11 @@ export default function Products() {
       <div className="toolbar">
         <h1 className="grow" style={{ margin: 0 }}>Menús y productos</h1>
         {saved && <span className="saved">{saved}</span>}
+        {menu && (
+          <button className="btn solid sm" onClick={() => newCategory(menu)}>
+            <Icon name="plus" /> Categoría
+          </button>
+        )}
         <button className="btn ghost sm" onClick={() => void op((t) => api.admin.upsert(t, 'menus', { name: 'Nuevo menú', sort: menus.length + 1 }), 'Menú creado ✓')}>
           <Icon name="plus" /> Menú
         </button>
@@ -118,12 +148,25 @@ export default function Products() {
       )}
 
       {menu?.categories.map((c, i, cats) => (
-        <div className="card cat-block" key={c.id + editLang}>
+        <div className={`card cat-block${c.active === false ? ' cat-off' : ''}`} key={c.id + editLang}>
           <div className="cat-block-head">
+            <span className="cat-thumb">{c.image ? <img src={mediaUrl(c.image)} alt="" /> : <Icon name="menu" />}</span>
             <input className="input" placeholder={editLang !== 'es' ? c.name : undefined} defaultValue={trGet(c as never, 'name', editLang)} onBlur={(e) => e.target.value !== trGet(c as never, 'name', editLang) && (editLang !== 'es' || e.target.value.trim()) && void saveText('categories', c, 'name', e.target.value.trim())} aria-label="Nombre de la categoría" />
             <button className="mini" onClick={() => moveCategory(cats, i, -1)} aria-label="Subir"><Icon name="arrowLeft" style={{ transform: 'rotate(90deg)' }} /></button>
             <button className="mini" onClick={() => moveCategory(cats, i, 1)} aria-label="Bajar"><Icon name="arrowRight" style={{ transform: 'rotate(90deg)' }} /></button>
-            <ConfirmButton label="Eliminar categoría" onConfirm={() => void op((t) => api.admin.remove(t, 'categories', c.id), 'Categoría eliminada')} />
+          </div>
+          <div className="cat-actions">
+            {c.active === false && <span className="status cancelado">Suspendida · no sale en la carta</span>}
+            <span className="muted" style={{ fontSize: 12 }}>{c.products.length} productos</span>
+            <span className="grow" />
+            <button className="btn ghost sm" onClick={() => editCategory(c, menu)}><Icon name="edit" /> Editar</button>
+            <button className={`btn sm ${c.active === false ? 'solid' : 'ghost'}`} onClick={() => void toggleCategory(c)}>
+              {c.active === false ? <><Icon name="check" /> Activar</> : <><Icon name="lock" /> Suspender</>}
+            </button>
+            <ConfirmButton
+              label={c.products.length ? `Eliminar categoría y sus ${c.products.length} productos` : 'Eliminar categoría'}
+              onConfirm={() => void op((t) => api.admin.remove(t, 'categories', c.id), 'Categoría eliminada')}
+            />
           </div>
           {c.products.map((p) => (
             <div key={p.id} className={`list-item${p.active === false ? ' off' : ''}`}>
@@ -145,19 +188,50 @@ export default function Products() {
       ))}
 
       {menu && (
-        <form
-          className="card panel"
-          style={{ display: 'flex', gap: 8 }}
-          onSubmit={(e) => {
-            e.preventDefault()
-            if (!newCat.trim()) return
-            void op((t) => api.admin.upsert(t, 'categories', { menu_id: menu.id, name: newCat.trim(), sort: menu.categories.length + 1 }), 'Categoría creada ✓').then(() => setNewCat(''))
-          }}
-        >
-          <input className="input" style={{ flex: 1 }} placeholder="Nueva categoría" value={newCat} onChange={(e) => setNewCat(e.target.value)} />
-          <button className="btn solid sm" disabled={!newCat.trim()}><Icon name="plus" /> Agregar</button>
-        </form>
+        <button className="btn block cat-add" onClick={() => newCategory(menu)}>
+          <Icon name="plus" /> Nueva categoría en “{menu.name}”
+        </button>
       )}
+
+      <AnimatePresence>
+        {catDraft && (
+          <motion.div className="sheet-backdrop" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setCatDraft(null)}>
+            <motion.div className="sheet" onClick={(e) => e.stopPropagation()} initial={{ y: 60 }} animate={{ y: 0 }} exit={{ y: 60 }}>
+              <div className="grab" />
+              <h2>{catDraft.id ? 'Editar categoría' : 'Nueva categoría'}</h2>
+              <LangTabs lang={catLang} onChange={setCatLang} missing={(l) => trMissing(catDraft as never, ['name'], l)} />
+              <div className="field" style={{ marginTop: 12 }}>
+                <label>Nombre{catLang !== 'es' ? ` (${catLang.toUpperCase()})` : ''}</label>
+                <input
+                  className="input" dir={catLang === 'ar' ? 'rtl' : 'ltr'} autoFocus maxLength={60}
+                  placeholder={catLang !== 'es' ? catDraft.name : 'Ej. Postres'}
+                  value={trGet(catDraft as never, 'name', catLang)}
+                  onChange={(e) => setCatDraft(trSet(catDraft, 'name', catLang, e.target.value))}
+                />
+              </div>
+              <div className="field">
+                <label>Menú</label>
+                <select className="input" value={catDraft.menu_id} onChange={(e) => setCatDraft({ ...catDraft, menu_id: e.target.value })}>
+                  {menus.map((m) => <option key={m.id} value={m.id}>{m.name}</option>)}
+                </select>
+              </div>
+              <div className="field">
+                <label>Imagen del círculo (opcional)</label>
+                <ImageListEditor value={catDraft.image ? [catDraft.image] : []} onChange={(imgs) => setCatDraft({ ...catDraft, image: imgs[imgs.length - 1] ?? null })} />
+              </div>
+              <label className="switch">
+                <input type="checkbox" checked={catDraft.active} onChange={(e) => setCatDraft({ ...catDraft, active: e.target.checked })} />
+                {catDraft.active ? 'Activa: se muestra en la carta' : 'Suspendida: oculta en la carta y no se puede pedir'}
+              </label>
+              {error && <p className="error">{error}</p>}
+              <div style={{ display: 'flex', gap: 8, marginTop: 16 }}>
+                <button className="btn solid" onClick={() => void saveCategory()}><Icon name="check" /> Guardar</button>
+                <button className="btn ghost" onClick={() => setCatDraft(null)}>Cancelar</button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <AnimatePresence>
         {draft && (

@@ -60,6 +60,14 @@
 .cat-block { margin-bottom: 16px; }
 .cat-block-head { display: flex; align-items: center; gap: 8px; padding: 12px 14px; border-bottom: 1px solid var(--border); }
 .cat-block-head input { flex: 1; }
+.cat-thumb { width: 38px; height: 38px; border-radius: 50%; overflow: hidden; flex-shrink: 0; display: grid; place-items: center; border: 1.5px solid var(--gold); color: var(--gold); background: var(--surface-2); }
+.cat-thumb img { width: 100%; height: 100%; object-fit: cover; }
+.cat-thumb svg { width: 18px; height: 18px; }
+.cat-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 10px 14px; border-bottom: 1px solid var(--border); }
+.cat-actions .grow { flex: 1; }
+.cat-off { border-style: dashed; }
+.cat-off .list-item, .cat-off .cat-block-head { opacity: 0.55; }
+.cat-add { margin-bottom: 16px; border-style: dashed; border-color: var(--gold); color: var(--gold); }
 
 .form-grid { display: grid; grid-template-columns: 1fr; gap: 0 14px; }
 @media (min-width: 720px) { .form-grid { grid-template-columns: 1fr 1fr; } }

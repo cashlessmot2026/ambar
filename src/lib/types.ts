@@ -22,6 +22,8 @@ export interface Category {
   sort: number
   products: Product[]
   menu_id?: string
+  /** false = suspendida: no sale en la carta (solo el panel la ve). */
+  active?: boolean
 }
 
 export interface Menu {
