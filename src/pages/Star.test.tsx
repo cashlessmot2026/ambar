@@ -18,10 +18,10 @@ describe('Star (escaneo sin registro)', () => {
         </CustomerProvider>
       </MemoryRouter>,
     )
-    expect(await screen.findByText('Regístrate')).toBeTruthy()
+    expect(await screen.findByText('Crea tu cuenta Ámbar')).toBeTruthy()
     fireEvent.click(document.querySelector('.sheet-backdrop')!)
     const btn = await screen.findByRole('button', { name: /crear mi tarjeta/i })
     fireEvent.click(btn)
-    expect(await screen.findByText('Regístrate')).toBeTruthy()
+    expect(await screen.findByText('Crea tu cuenta Ámbar')).toBeTruthy()
   })
 })

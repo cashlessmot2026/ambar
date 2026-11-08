@@ -1,6 +1,8 @@
 import type { Dict } from './es'
+import { extraEn } from './extra'
 
 export const en: Dict = {
+  ...extraEn,
   'lang.title': 'Language',
   'lang.button': 'Change language',
 

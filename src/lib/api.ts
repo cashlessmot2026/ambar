@@ -1,7 +1,8 @@
 import { createClient } from '@supabase/supabase-js'
 import { SUPABASE_KEY, SUPABASE_URL, supabase } from './supabase'
 import type {
-  AdminCustomer, AdminData, AdminOrder, ClaimResult, Customer, OrderSummary, PublicData, Settings, Survey, SurveyResults,
+  AdminCustomer, AdminData, AdminOrder, AiReply, ClaimResult, Coords, Customer, OrderLine, OrderStatus, OrderSummary,
+  PublicData, RegisterInput, Reservation, ReservationInput, Settings, Survey, SurveyResults,
 } from './types'
 
 export class ApiError extends Error {
@@ -33,6 +34,45 @@ const MESSAGES: Record<string, string> = {
   invalid_survey: 'La encuesta no es válida. Califica todas las preguntas.',
   unauthorized: 'Tu sesión de administrador expiró.',
   network: 'Sin conexión. Revisa tu internet e inténtalo de nuevo.',
+  invalid_email: 'Escribe un correo válido.',
+  invalid_pin: 'El PIN debe tener 4 dígitos.',
+  invalid_pin_old: 'El PIN actual no es correcto.',
+  invalid_birthday: 'Revisa la fecha de cumpleaños.',
+  invalid_location: 'No pudimos leer tu ubicación.',
+  invalid_credentials: 'Correo/teléfono o PIN incorrectos.',
+  account_exists: 'Este teléfono ya tiene cuenta. Inicia sesión con tu PIN.',
+  email_in_use: 'Este correo ya está registrado. Inicia sesión.',
+  invalid_datetime: 'Elige una fecha y hora futuras.',
+  invalid_people: 'Número de personas inválido.',
+  invalid_babies: 'Indica si vienes con bebés.',
+  invalid_status: 'Estado inválido.',
+  invalid_item: 'Revisa los productos del pedido.',
+  reservation_closed: 'Esta reserva ya no admite cambios.',
+  not_found: 'Ya no existe. Actualiza la lista.',
+  email_not_configured: 'El correo no está configurado en Supabase (faltan GMAIL_USER / GMAIL_APP_PASSWORD).',
+  smtp_failed: 'Gmail rechazó el envío. Revisa GMAIL_USER y la contraseña de aplicación.',
+  already_sent: 'Ese correo ya se envió.',
+  not_confirmed: 'La reserva debe estar confirmada para enviar el correo.',
+  ai_not_configured: 'El mesero IA no está configurado (falta GEMINI_API_KEY).',
+  ai_failed: 'El mesero IA no respondió. Inténtalo de nuevo.',
+}
+
+/** Llama una Edge Function y convierte su { error } en ApiError. */
+async function fn<T>(name: string, body: Record<string, unknown>): Promise<T> {
+  let res
+  try {
+    res = await supabase.functions.invoke(name, { body })
+  } catch {
+    throw new ApiError('network')
+  }
+  if (res.error) {
+    let code = 'unknown'
+    const ctx = (res.error as { context?: Response }).context
+    try { code = (await ctx?.json())?.error ?? code } catch { /* cuerpo no JSON */ }
+    if (code === 'unknown' && res.error.name === 'FunctionsFetchError') code = 'network'
+    throw new ApiError(code)
+  }
+  return res.data as T
 }
 
 export function errorMessage(e: unknown): string {
@@ -60,9 +100,47 @@ export const api = {
     rpc<{ token: string; customer: Customer }>('register_customer', {
       p_name: name, p_address: address, p_phone: phone, p_consent: consent,
     }),
+  registerAccount: (i: RegisterInput) =>
+    rpc<{ token: string; customer: Customer }>('register_account', {
+      p_name: i.name, p_email: i.email, p_phone: i.phone, p_birthday: i.birthday, p_address: i.address,
+      p_pin: i.pin, p_consent: i.consent, p_lat: i.coords?.lat ?? null, p_lng: i.coords?.lng ?? null,
+    }),
+  /** Login con correo o teléfono + PIN. La RPC devuelve null si no coinciden. */
+  login: async (login: string, pin: string) => {
+    const res = await rpc<{ token: string; customer: Customer } | null>('customer_login', { p_login: login, p_pin: pin })
+    if (!res) throw new ApiError('invalid_credentials')
+    return res
+  },
+  logout: (token: string) => rpc<void>('customer_logout', { p_token: token }),
+  updateProfile: (
+    token: string,
+    p: { name: string; email: string; address: string; birthday: string | null },
+    gps: { mode: 'keep' } | { mode: 'clear' } | { mode: 'set'; coords: Coords },
+  ) =>
+    rpc<Customer>('update_my_profile', {
+      p_token: token, p_name: p.name, p_email: p.email, p_address: p.address, p_birthday: p.birthday || null,
+      p_gps: gps.mode, p_lat: gps.mode === 'set' ? gps.coords.lat : null, p_lng: gps.mode === 'set' ? gps.coords.lng : null,
+    }),
+  setPin: (token: string, oldPin: string, newPin: string) =>
+    rpc<Customer>('set_my_pin', { p_token: token, p_old: oldPin, p_new: newPin }),
+  myOrders: (token: string) => rpc<OrderSummary[]>('my_orders', { p_token: token, p_limit: 30 }),
+  myReservations: (token: string) => rpc<Reservation[]>('my_reservations', { p_token: token }),
   getMyCard: (token: string) => rpc<Customer>('get_my_card', { p_token: token }),
-  placeOrder: (token: string, items: { product_id: string; qty: number }[], notes: string) =>
-    rpc<OrderSummary>('place_order', { p_token: token, p_items: items, p_notes: notes }),
+  placeOrder: (token: string, items: { product_id: string; qty: number }[], notes: string, coords: Coords | null = null) =>
+    rpc<OrderSummary>('place_order', {
+      p_token: token, p_items: items, p_notes: notes, p_lat: coords?.lat ?? null, p_lng: coords?.lng ?? null,
+    }),
+  createReservation: (r: ReservationInput, token: string | null) =>
+    rpc<{ reservation: Reservation; key: string }>('create_reservation', {
+      p_name: r.name, p_phone: r.phone, p_email: r.email, p_reserved_at: r.reserved_at, p_people: r.people,
+      p_babies: r.babies, p_notes: r.notes, p_token: token,
+    }),
+  setReservationDishes: (id: string, key: string, items: { product_id: string; qty: number }[]) =>
+    rpc<Reservation>('reservation_set_dishes', { p_id: id, p_key: key, p_items: items }),
+  /** Correo "reserva recibida" al cliente (Edge Function reservation-email). */
+  reservationReceivedEmail: (id: string, key: string) => fn<{ ok: true }>('reservation-email', { id, kind: 'received', key }),
+  askWaiter: (messages: { role: 'user' | 'model'; text: string }[], cart: { product_id: string; qty: number }[], lang: string) =>
+    fn<AiReply>('mesero-ia', { messages, cart, lang }),
   armRedeem: (token: string, rewardId: string | null) =>
     rpc<Customer>('arm_redeem', { p_token: token, p_reward_id: rewardId }),
   submitSurvey: (answers: { id: string; text: string; rating: number }[], comment: string) =>
@@ -79,8 +157,18 @@ export const api = {
     logout: (t: string) => rpc<void>('admin_logout', { p_token: t }),
     get: (t: string) => rpc<AdminData>('admin_get', { p_token: t }),
     orders: (t: string, limit = 150) => rpc<AdminOrder[]>('admin_orders', { p_token: t, p_limit: limit }),
-    setOrderStatus: (t: string, id: string, status: AdminOrder['status']) =>
+    setOrderStatus: (t: string, id: string, status: OrderStatus) =>
       rpc<void>('admin_set_order_status', { p_token: t, p_id: id, p_status: status }),
+    updateOrder: (t: string, id: string, items: OrderLine[], notes: string) =>
+      rpc<OrderSummary>('admin_update_order', { p_token: t, p_id: id, p_items: items, p_notes: notes }),
+    deleteOrder: (t: string, id: string) => rpc<void>('admin_delete_order', { p_token: t, p_id: id }),
+    reservations: (t: string) => rpc<Reservation[]>('admin_reservations', { p_token: t, p_limit: 300 }),
+    updateReservation: (t: string, id: string, row: Partial<Omit<Reservation, 'id'>>) =>
+      rpc<Reservation>('admin_update_reservation', { p_token: t, p_id: id, p_row: row }),
+    deleteReservation: (t: string, id: string) => rpc<void>('admin_delete_reservation', { p_token: t, p_id: id }),
+    /** Correo de confirmación al cliente (Edge Function reservation-email). */
+    reservationConfirmedEmail: (t: string, id: string) =>
+      fn<{ ok: true }>('reservation-email', { id, kind: 'confirmed', admin_token: t }),
     customers: (t: string) => rpc<AdminCustomer[]>('admin_customers', { p_token: t }),
     adjustStars: (t: string, customerId: string, delta: number) =>
       rpc<Customer>('admin_adjust_stars', { p_token: t, p_customer: customerId, p_delta: delta }),

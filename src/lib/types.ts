@@ -90,9 +90,28 @@ export interface Customer {
   name: string
   address: string
   phone: string
+  email?: string | null
+  birthday?: string | null // YYYY-MM-DD
+  lat?: number | null
+  lng?: number | null
+  /** false en cuentas creadas antes del login con PIN. */
+  has_pin?: boolean
   stars: number
   pending_reward_id: string | null
   created_at: string
+}
+
+export interface Coords { lat: number; lng: number }
+
+export interface RegisterInput {
+  name: string
+  email: string
+  phone: string
+  birthday: string
+  address: string
+  pin: string
+  consent: boolean
+  coords: Coords | null
 }
 
 export interface OrderLine {
@@ -102,6 +121,9 @@ export interface OrderLine {
   price: number
 }
 
+export type OrderStatus = 'nuevo' | 'preparando' | 'en_camino' | 'entregado' | 'cancelado'
+export const ORDER_STATUSES: OrderStatus[] = ['nuevo', 'preparando', 'en_camino', 'entregado', 'cancelado']
+
 export interface OrderSummary {
   id: string
   number: number
@@ -109,6 +131,10 @@ export interface OrderSummary {
   items: OrderLine[]
   notes: string | null
   created_at: string
+  status?: OrderStatus
+  lat?: number | null
+  lng?: number | null
+  updated_at?: string
 }
 
 export type ClaimResult =
@@ -116,8 +142,46 @@ export type ClaimResult =
   | { action: 'redeem'; stars: 0; reward: { id: string; name: string; description: string | null } }
 
 export interface AdminOrder extends OrderSummary {
-  status: 'nuevo' | 'preparando' | 'entregado' | 'cancelado'
-  customer: { name: string; phone: string; address: string }
+  status: OrderStatus
+  customer: { name: string; phone: string; address: string; email?: string | null }
+}
+
+export type ReservationStatus = 'pendiente' | 'confirmada' | 'rechazada' | 'cancelada' | 'completada'
+export const RESERVATION_STATUSES: ReservationStatus[] = ['pendiente', 'confirmada', 'rechazada', 'cancelada', 'completada']
+
+export interface Reservation {
+  id: string
+  number: number
+  name: string
+  phone: string
+  email: string
+  reserved_at: string
+  people: number
+  babies: boolean
+  notes: string | null
+  dishes: OrderLine[]
+  dishes_total: number
+  status: ReservationStatus
+  email_received_at: string | null
+  email_confirmed_at: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface ReservationInput {
+  name: string
+  phone: string
+  email: string
+  reserved_at: string // ISO
+  people: number
+  babies: boolean
+  notes: string
+}
+
+export interface AiReply {
+  reply: string
+  products: string[]
+  recommended: string | null
 }
 
 export interface StarEvent {

@@ -1,6 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
 import { ApiError, api } from '../lib/api'
-import type { Customer } from '../lib/types'
+import type { Customer, RegisterInput } from '../lib/types'
 
 export const TOKEN_KEY = 'ambar:customer-token'
 const CUSTOMER_KEY = 'ambar:customer'
@@ -10,9 +10,15 @@ interface CustomerValue {
   token: string | null
   /** true cuando ya se verificó el token guardado (o no había). */
   ready: boolean
-  register: (name: string, address: string, phone: string, consent: boolean) => Promise<Customer>
+  /** Crea la cuenta (con PIN) y deja la sesión iniciada en este dispositivo. */
+  signUp: (input: RegisterInput) => Promise<Customer>
+  /** Inicia sesión con correo o teléfono + PIN. */
+  signIn: (login: string, pin: string) => Promise<Customer>
+  /** Cierra la sesión en este dispositivo (y borra el token en el servidor). */
+  signOut: () => void
   refresh: () => Promise<Customer | null>
   setCustomer: (c: Customer) => void
+  /** Olvida la sesión local sin llamar al servidor (token inválido). */
   logout: () => void
 }
 
@@ -45,6 +51,12 @@ export function CustomerProvider({ children }: { children: ReactNode }) {
     setCustomerState(null)
   }, [])
 
+  const signOut = useCallback(() => {
+    const t = read(TOKEN_KEY)
+    if (t) void api.logout(t).catch(() => {})
+    logout()
+  }, [logout])
+
   const refresh = useCallback(async () => {
     const t = read(TOKEN_KEY)
     if (!t) {
@@ -65,17 +77,19 @@ export function CustomerProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => { void refresh() }, [refresh])
 
-  const register = useCallback(async (name: string, address: string, phone: string, consent: boolean) => {
-    const res = await api.register(name, address, phone, consent)
+  const start = useCallback((res: { token: string; customer: Customer }) => {
     write(TOKEN_KEY, res.token)
     setToken(res.token)
     setCustomer(res.customer)
     return res.customer
   }, [setCustomer])
 
+  const signUp = useCallback(async (input: RegisterInput) => start(await api.registerAccount(input)), [start])
+  const signIn = useCallback(async (login: string, pin: string) => start(await api.login(login, pin)), [start])
+
   const value = useMemo(
-    () => ({ customer, token, ready, register, refresh, setCustomer, logout }),
-    [customer, token, ready, register, refresh, setCustomer, logout],
+    () => ({ customer, token, ready, signUp, signIn, signOut, refresh, setCustomer, logout }),
+    [customer, token, ready, signUp, signIn, signOut, refresh, setCustomer, logout],
   )
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>
 }

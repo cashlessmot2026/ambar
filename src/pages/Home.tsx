@@ -80,6 +80,9 @@ export default function Home() {
             <motion.div whileTap={{ scale: 0.95 }} whileHover={{ scale: 1.05 }}>
               <Link to="/menu" className="btn solid"><Icon name="menu" /> {t('home.viewMenu')}</Link>
             </motion.div>
+            <motion.div whileTap={{ scale: 0.95 }} whileHover={{ scale: 1.05 }}>
+              <Link to="/reservar" className="btn solid reserve-btn"><Icon name="calendar" /> {t('home.reserve')}</Link>
+            </motion.div>
             <motion.a whileTap={{ scale: 0.95 }} whileHover={{ scale: 1.05 }} className="btn" href={contact.instagram_url} target="_blank" rel="noreferrer">
               <Icon name="instagram" /> {t('home.instagram')}
             </motion.a>

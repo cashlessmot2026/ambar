@@ -1,5 +1,8 @@
-// Diccionario base. Todas las demás traducciones deben tener exactamente estas claves.
-export const es = {
+import { extraEs } from './extra'
+
+// Diccionario base. Todas las demás traducciones deben tener exactamente estas claves (las de `core`);
+// las de extra.ts son obligatorias en español e inglés y opcionales en los demás idiomas.
+const core = {
   'lang.title': 'Idioma',
   'lang.button': 'Cambiar idioma',
 
@@ -193,5 +196,7 @@ export const es = {
   'scan.cancel': 'Cancelar',
 } as const
 
+export const es = { ...core, ...extraEs }
+export type CoreKey = keyof typeof core
 export type Key = keyof typeof es
-export type Dict = Record<Key, string>
+export type Dict = Record<CoreKey, string> & Partial<Record<Key, string>>

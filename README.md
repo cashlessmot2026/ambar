@@ -50,10 +50,36 @@ node scripts/db.mjs supabase/migrations/006_i18n_ordering.sql
 node scripts/db.mjs supabase/migrations/007_i18n_data.sql      # traducciones del menú (volver a aplicar si se reaplica 003)
 node scripts/db.mjs supabase/migrations/008_review_fixes.sql
 node scripts/db.mjs supabase/migrations/009_survey.sql           # encuesta de satisfacción
+node scripts/db.mjs supabase/migrations/010_accounts_reservations.sql  # cuentas con PIN, reservas, tiempo real, Mesero IA
 
 # Pruebas de las RPC (todo se revierte):
 node scripts/db.mjs supabase/tests/rpc_test.sql --expect-error ALL_TESTS_PASSED
 ```
+
+## Cuentas, reservas, alertas y Mesero IA (migración 010)
+
+- **Cuentas**: registro con nombre, correo, teléfono, cumpleaños, dirección, PIN de 4 dígitos y GPS opcional. Login con correo **o** teléfono + PIN (bcrypt; 5 fallos en 15 min bloquean la cuenta, 20 la IP). La sesión queda guardada en el dispositivo hasta "Cerrar sesión". Los clientes antiguos (sin PIN) completan su cuenta registrándose con el mismo teléfono y nombre. Perfil e historial en `/cuenta`.
+- **Pedidos**: guardan la ubicación GPS (si el cliente la comparte) y se ven en su perfil con el estado en vivo. En el panel se pueden editar, eliminar y pasar por `nuevo → preparando → en camino → entregado`. Al confirmar se genera la imagen del ticket y se abre WhatsApp con el texto.
+- **Reservas** (`/reservar`, botón junto a "Ver menú"): obligatorios nombre, teléfono, correo, fecha/hora, personas y si vienen con bebés. Después se ofrece elegir platos en el menú y adjuntarlos a la reserva. Llegan al panel (pestaña Reservas) y al WhatsApp del restaurante.
+- **Tiempo real**: la base de datos difunde un aviso sin datos personales por Supabase Realtime (`realtime.send`, canal público `ambar-admin` y `ambar-customer-<id>`); el panel suena y una voz dice "Tienes una nueva reserva" / "Tienes un nuevo pedido". Hay que tocar **Activar alertas** una vez por sesión (los navegadores bloquean el audio hasta un toque). Si Realtime falla, el panel consulta cada 20 s.
+
+### Edge Functions
+
+| Función | Qué hace | Secretos |
+| --- | --- | --- |
+| `reservation-email` | Correo "reserva recibida" (al reservar) y "reserva confirmada" (al aceptar en el panel), por SMTP de Gmail, remitente **Ámbar Restaurante** | `GMAIL_USER`, `GMAIL_APP_PASSWORD`, `MAIL_FROM_NAME` |
+| `mesero-ia` | "Tu mesero IA" con Gemini: conoce toda la carta, sugiere adicionales y empuja el recomendado del día (rota a diario entre los 5 platos más costosos) | `GEMINI_API_KEY`, `GEMINI_MODEL` (opcional) |
+
+```bash
+# 1) Copia supabase/functions/.env.example a supabase/functions/.env (ignorado por git) y llénalo.
+# 2) Sube los secretos y las funciones (la app usa la llave publicable, por eso --no-verify-jwt):
+npx supabase login
+npx supabase secrets set --env-file supabase/functions/.env --project-ref evfvcvllsjlakrpqmvdj
+npx supabase functions deploy reservation-email --no-verify-jwt --project-ref evfvcvllsjlakrpqmvdj
+npx supabase functions deploy mesero-ia --no-verify-jwt --project-ref evfvcvllsjlakrpqmvdj
+```
+
+Gmail solo envía desde la dirección `@gmail.com` de la cuenta; lo que ve el cliente como remitente es **"Ámbar Restaurante"**. Para que la dirección misma sea `@ambar...` hace falta un dominio propio (y un proveedor como Resend o Google Workspace).
 
 ## Traducciones
 
