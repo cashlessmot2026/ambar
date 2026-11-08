@@ -34,8 +34,9 @@ export function detectLang(saved: string | null, navLangs: readonly string[]): L
   return 'es'
 }
 
+/** Idioma pedido → inglés (claves nuevas aún sin traducir) → español. */
 export function translate(lang: Lang, key: Key, vars?: Record<string, string | number>): string {
-  let s = (DICTS[lang] as Record<string, string>)[key] || es[key]
+  let s: string = DICTS[lang][key] || (lang === 'es' ? '' : DICTS.en[key]) || es[key]
   if (vars) for (const [k, v] of Object.entries(vars)) s = s.replaceAll(`{${k}}`, String(v))
   return s
 }

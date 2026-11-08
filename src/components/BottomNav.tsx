@@ -12,6 +12,7 @@ const TABS: { to: string; label: Key; icon: IconName; ordering?: boolean }[] = [
   { to: '/menu', label: 'nav.menu', icon: 'menu' },
   { to: '/pedido', label: 'nav.order', icon: 'bag', ordering: true },
   { to: '/tarjeta', label: 'nav.card', icon: 'card' },
+  { to: '/cuenta', label: 'nav.account', icon: 'users' },
 ]
 
 export function BottomNav() {

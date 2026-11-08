@@ -1,9 +1,11 @@
 import { AnimatePresence, motion } from 'motion/react'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import { GpsToggle } from '../components/GpsToggle'
 import { Icon } from '../components/Icon'
 import { PlaceholderArt } from '../components/PlaceholderArt'
 import { RegisterModal } from '../components/RegisterModal'
+import { useToast } from '../components/Toast'
 import { TopBar } from '../components/TopBar'
 import { useAppData } from '../context/AppData'
 import { useCart } from '../context/Cart'
@@ -12,21 +14,43 @@ import { errKey, localized, useI18n } from '../i18n/I18n'
 import { ApiError, api } from '../lib/api'
 import { formatCOP, mediaUrl } from '../lib/format'
 import { isOrderingEnabled } from '../lib/ordering'
-import type { Customer, Product } from '../lib/types'
-import { buildWhatsAppUrl } from '../lib/whatsapp'
+import { readDraft, writeDraft, type ReservationDraft } from '../lib/reservationDraft'
+import type { Coords, Customer, Product } from '../lib/types'
+import { buildWhatsAppUrl, DEFAULT_WHATSAPP, reservationText, waUrl } from '../lib/whatsapp'
 
 export const LAST_ORDER_KEY = 'ambar:last-order'
+
+/** Reserva a la que se están eligiendo platos (se actualiza si cambia en otra pestaña). */
+export function useReservationDraft(): ReservationDraft | null {
+  const [draft, setDraft] = useState(readDraft)
+  useEffect(() => {
+    const sync = () => setDraft(readDraft())
+    window.addEventListener('ambar:draft', sync)
+    window.addEventListener('storage', sync)
+    return () => { window.removeEventListener('ambar:draft', sync); window.removeEventListener('storage', sync) }
+  }, [])
+  return draft
+}
 
 export default function Cart() {
   const { items, setQty, remove, clear } = useCart()
   const { data, reload } = useAppData()
-  const { customer, token, logout } = useCustomer()
+  const { customer, token, logout, refresh } = useCustomer()
   const { t, lang, dir } = useI18n()
+  const toast = useToast()
   const navigate = useNavigate()
+  const draft = useReservationDraft()
   const [notes, setNotes] = useState('')
   const [registerOpen, setRegisterOpen] = useState(false)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [coords, setCoords] = useState<Coords | null>(null)
+  const whatsapp = data?.settings.contact.whatsapp ?? DEFAULT_WHATSAPP
+
+  // Precargar la ubicación guardada en el perfil (el cliente puede quitarla o actualizarla).
+  useEffect(() => {
+    if (customer?.lat != null && customer?.lng != null) setCoords({ lat: customer.lat, lng: customer.lng })
+  }, [customer?.lat, customer?.lng])
 
   // Precios y disponibilidad siempre desde los datos actuales del menú.
   const catalog = useMemo(() => {
@@ -53,11 +77,12 @@ export default function Cart() {
     // Abrimos la ventana en el mismo gesto del usuario para que el navegador no la bloquee.
     const win = window.open('about:blank', '_blank')
     try {
-      const order = await api.placeOrder(tok, lines.filter((l) => l.available).map((l) => ({ product_id: l.product_id, qty: l.qty })), notes)
-      const url = buildWhatsAppUrl(data?.settings.contact.whatsapp ?? '573229089680', order, c, lang)
-      try { sessionStorage.setItem(LAST_ORDER_KEY, JSON.stringify({ order, url })) } catch { /* sin almacenamiento */ }
+      const order = await api.placeOrder(tok, lines.filter((l) => l.available).map((l) => ({ product_id: l.product_id, qty: l.qty })), notes, coords)
+      const url = buildWhatsAppUrl(whatsapp, order, c, lang)
+      try { sessionStorage.setItem(LAST_ORDER_KEY, JSON.stringify({ order, url, customer: c })) } catch { /* sin almacenamiento */ }
       if (win) win.location.href = url
       clear()
+      void refresh() // el pedido sumó una estrella a la Tarjeta Ámbar
       navigate('/gracias')
     } catch (e) {
       win?.close()
@@ -80,6 +105,37 @@ export default function Cart() {
     void placeOrder(customer, token)
   }
 
+  /** Adjunta los platos a la reserva y abre WhatsApp con la reserva completa. */
+  async function sendToReservation(d: ReservationDraft) {
+    setBusy(true)
+    setError(null)
+    const win = window.open('about:blank', '_blank')
+    try {
+      const r = await api.setReservationDishes(d.id, d.key, lines.filter((l) => l.available).map((l) => ({ product_id: l.product_id, qty: l.qty })))
+      const url = waUrl(whatsapp, reservationText(r, lang))
+      if (win) win.location.href = url
+      clear()
+      writeDraft(null)
+      toast(t('res.dishesSent', { n: r.number }))
+      navigate(customer ? '/cuenta' : '/')
+    } catch (e) {
+      win?.close()
+      if (e instanceof ApiError && (e.code === 'invalid_token' || e.code === 'reservation_closed')) writeDraft(null)
+      if (e instanceof ApiError && e.code === 'product_unavailable') void reload()
+      setError(t(errKey(e)))
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  const draftBanner = draft && (
+    <div className="card draft-banner">
+      <Icon name="receipt" />
+      <span style={{ flex: 1 }}>{t('res.banner', { n: draft.number })}</span>
+      <button className="gold" style={{ fontSize: 12, fontWeight: 700 }} onClick={() => writeDraft(null)}>{t('res.cancelDraft')}</button>
+    </div>
+  )
+
   if (data && !isOrderingEnabled(data.settings)) {
     return (
       <>
@@ -98,6 +154,7 @@ export default function Cart() {
     return (
       <>
         <TopBar title={t('cart.title')} />
+        {draft && <div className="page" style={{ paddingBottom: 0 }}>{draftBanner}</div>}
         <div className="page empty">
           <Icon name="bag" />
           <h2 style={{ fontSize: 18, marginBottom: 6 }}>{t('cart.emptyTitle')}</h2>
@@ -115,6 +172,7 @@ export default function Cart() {
     <>
       <TopBar title={t('cart.title')} />
       <div className="page">
+        {draftBanner}
         <div className="section-title" style={{ marginTop: 18 }}>
           <h2>{t('cart.yourOrder')}</h2>
           <button onClick={clear}>{t('cart.clear')}</button>
@@ -158,14 +216,19 @@ export default function Cart() {
           <textarea id="notes" className="input" placeholder={t('cart.notesPlaceholder')} value={notes} onChange={(e) => setNotes(e.target.value)} maxLength={500} />
         </div>
 
-        {customer && (
+        {customer && !draft && (
           <div className="card who">
             <span className="ico"><Icon name="pin" /></span>
             <div style={{ flex: 1, minWidth: 0 }}>
               <strong>{customer.name}</strong>
               <div className="muted" style={{ fontSize: 13 }}>{customer.address} · <span dir="ltr">{customer.phone}</span></div>
             </div>
-            <button className="gold" style={{ fontSize: 13, fontWeight: 600 }} onClick={() => setRegisterOpen(true)}>{t('cart.edit')}</button>
+            <Link className="gold" style={{ fontSize: 13, fontWeight: 600 }} to="/cuenta">{t('cart.edit')}</Link>
+          </div>
+        )}
+        {!draft && (
+          <div className="card" style={{ padding: '12px 16px', marginTop: 12 }}>
+            <GpsToggle value={coords} onChange={setCoords} label={t('cart.gps')} hint={t('auth.gpsHint')} />
           </div>
         )}
 
@@ -174,17 +237,31 @@ export default function Cart() {
           <strong>{formatCOP(total)}</strong>
         </div>
         {error && <p className="error" role="alert">{error}</p>}
-        <motion.button
-          className="btn solid block"
-          style={{ marginTop: 14, height: 54 }}
-          whileTap={{ scale: 0.96 }}
-          whileHover={{ scale: 1.02 }}
-          onClick={onConfirm}
-          disabled={busy || total === 0}
-        >
-          <Icon name="whatsapp" /> {busy ? t('cart.sending') : customer ? t('cart.confirm') : t('cart.registerAndOrder')}
-        </motion.button>
-        <p className="muted" style={{ fontSize: 12, textAlign: 'center' }}>{t('cart.footnote')}</p>
+        {draft ? (
+          <motion.button
+            className="btn solid block"
+            style={{ marginTop: 14, height: 54 }}
+            whileTap={{ scale: 0.96 }}
+            onClick={() => void sendToReservation(draft)}
+            disabled={busy || total === 0}
+          >
+            <Icon name="whatsapp" /> {busy ? t('cart.sending') : t('res.sendDishes')}
+          </motion.button>
+        ) : (
+          <>
+            <motion.button
+              className="btn solid block"
+              style={{ marginTop: 14, height: 54 }}
+              whileTap={{ scale: 0.96 }}
+              whileHover={{ scale: 1.02 }}
+              onClick={onConfirm}
+              disabled={busy || total === 0}
+            >
+              <Icon name="whatsapp" /> {busy ? t('cart.sending') : customer ? t('cart.confirm') : t('cart.registerAndOrder')}
+            </motion.button>
+            <p className="muted" style={{ fontSize: 12, textAlign: 'center' }}>{t('cart.footnote')}</p>
+          </>
+        )}
       </div>
 
       <RegisterModal

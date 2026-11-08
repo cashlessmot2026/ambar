@@ -12,13 +12,16 @@ import Orders from './Orders'
 import PageSettings from './PageSettings'
 import Products from './Products'
 import QrNfc from './QrNfc'
+import Reservations from './Reservations'
 import Rewards from './Rewards'
 import Security from './Security'
 import SurveyAdmin from './SurveyAdmin'
 import { AdminProvider, useAdmin } from './useAdmin'
+import { LiveProvider, useLive } from './useLive'
 
 const TABS: { to: string; label: string; icon: IconName }[] = [
   { to: 'pedidos', label: 'Pedidos', icon: 'receipt' },
+  { to: 'reservas', label: 'Reservas', icon: 'calendar' },
   { to: 'clientes', label: 'Clientes', icon: 'users' },
   { to: 'premios', label: 'Premios', icon: 'gift' },
   { to: 'menus', label: 'Menús', icon: 'menu' },
@@ -69,19 +72,43 @@ function Login() {
 }
 
 function Shell() {
-  const { token, logout } = useAdmin()
+  const { token } = useAdmin()
   if (!token) return <Login />
+  return (
+    <LiveProvider>
+      <ShellInner />
+    </LiveProvider>
+  )
+}
+
+function ShellInner() {
+  const { logout } = useAdmin()
+  const live = useLive()
+  const badge: Record<string, number> = {
+    pedidos: live.freshOrders.size,
+    reservas: (live.reservations ?? []).filter((r) => r.status === 'pendiente').length,
+  }
   return (
     <div className="admin">
       <header className="admin-head">
         <div className="admin-bar">
           <span className="brand"><img src={mediaUrl('logo.png')} alt="" /> PANEL ÁMBAR</span>
-          <button className="btn ghost sm" onClick={logout}><Icon name="logout" /> Salir</button>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button
+              className={`btn sm ${live.soundReady ? 'ghost' : 'solid sound-off'}`}
+              onClick={live.enableSound}
+              title="Las alertas suenan y una voz anuncia cada pedido o reserva nueva"
+            >
+              <Icon name={live.soundReady ? 'sound' : 'mute'} /> {live.soundReady ? 'Alertas activas' : 'Activar alertas'}
+            </button>
+            <button className="btn ghost sm" onClick={logout}><Icon name="logout" /> Salir</button>
+          </div>
         </div>
         <nav className="admin-tabs">
           {TABS.map((t) => (
             <NavLink key={t.to} to={`/ambar-admin/${t.to}`} className={({ isActive }) => (isActive ? 'active' : '')}>
               <Icon name={t.icon} /> {t.label}
+              {badge[t.to] > 0 && <span className="dot">{badge[t.to]}</span>}
             </NavLink>
           ))}
         </nav>
@@ -89,6 +116,7 @@ function Shell() {
       <main className="admin-main">
         <Routes>
           <Route path="pedidos" element={<Orders />} />
+          <Route path="reservas" element={<Reservations />} />
           <Route path="clientes" element={<Customers />} />
           <Route path="premios" element={<Rewards />} />
           <Route path="menus" element={<Products />} />

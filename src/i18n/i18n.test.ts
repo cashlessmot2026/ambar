@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { detectLang, LANGS, localized, translate } from './I18n'
 import { DICTS } from './dicts'
 import { es } from './locales/es'
+import { extraEs } from './locales/extra'
 
 describe('detectLang', () => {
   it.each([
@@ -23,20 +24,32 @@ describe('diccionarios', () => {
     expect(LANGS.map((l) => l.code)).toEqual(['es', 'en', 'de', 'ru', 'pt', 'it', 'fr', 'zh', 'ko', 'ar'])
     expect(LANGS.find((l) => l.code === 'ar')?.dir).toBe('rtl')
   })
-  it('todas las claves existen y no están vacías en los 10 idiomas', () => {
-    const keys = Object.keys(es)
+  it('las claves base existen y no están vacías en los 10 idiomas', () => {
+    const extra = new Set(Object.keys(extraEs))
+    const keys = Object.keys(es).filter((k) => !extra.has(k))
     for (const l of LANGS) {
       const d = DICTS[l.code] as Record<string, string>
       for (const k of keys) expect(d[k]?.trim(), `${l.code}.${k}`).toBeTruthy()
     }
   })
-  it('las variables {x} del español existen en cada traducción', () => {
+  it('las claves nuevas existen en español e inglés', () => {
+    for (const k of Object.keys(extraEs)) {
+      expect((DICTS.es as Record<string, string>)[k]?.trim(), `es.${k}`).toBeTruthy()
+      expect((DICTS.en as Record<string, string>)[k]?.trim(), `en.${k}`).toBeTruthy()
+    }
+  })
+  it('las variables {x} del español existen en cada traducción presente', () => {
     for (const l of LANGS) {
       const d = DICTS[l.code] as Record<string, string>
       for (const [k, v] of Object.entries(es)) {
+        if (!d[k]) continue
         for (const m of v.match(/\{\w+\}/g) ?? []) expect(d[k], `${l.code}.${k} ${m}`).toContain(m)
       }
     }
+  })
+  it('una clave nueva sin traducir cae a inglés, no a español', () => {
+    expect(translate('de', 'acc.logout')).toBe('Log out')
+    expect(translate('es', 'acc.logout')).toBe('Cerrar sesión')
   })
 })
 

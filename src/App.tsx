@@ -1,6 +1,7 @@
 import { AnimatePresence, motion } from 'motion/react'
 import { lazy, Suspense, type ReactNode } from 'react'
 import { HashRouter, Route, Routes, useLocation } from 'react-router-dom'
+import { AiWaiter } from './components/AiWaiter'
 import { BottomNav } from './components/BottomNav'
 import { IosInstallHint } from './components/IosInstallHint'
 import { ToastProvider } from './components/Toast'
@@ -9,11 +10,13 @@ import { CartProvider } from './context/Cart'
 import { CustomerProvider } from './context/Customer'
 import { ThemeApplier } from './context/Theme'
 import { I18nProvider } from './i18n/I18n'
+import Account from './pages/Account'
 import Card from './pages/Card'
 import Cart from './pages/Cart'
 import Home from './pages/Home'
 import Menu from './pages/Menu'
 import Privacy from './pages/Privacy'
+import Reserve from './pages/Reserve'
 import Star from './pages/Star'
 import Survey from './pages/Survey'
 import Thanks from './pages/Thanks'
@@ -42,6 +45,8 @@ function PublicApp() {
           <Route path="/pedido" element={<Page><Cart /></Page>} />
           <Route path="/gracias" element={<Page><Thanks /></Page>} />
           <Route path="/tarjeta" element={<Page><Card /></Page>} />
+          <Route path="/cuenta" element={<Page><Account /></Page>} />
+          <Route path="/reservar" element={<Page><Reserve /></Page>} />
           <Route path="/estrella" element={<Page><Star /></Page>} />
           <Route path="/encuesta" element={<Page><Survey /></Page>} />
           <Route path="/privacidad" element={<Page><Privacy /></Page>} />
@@ -49,6 +54,7 @@ function PublicApp() {
         </Routes>
       </AnimatePresence>
       <BottomNav />
+      {!location.pathname.startsWith('/estrella') && <AiWaiter />}
       {!location.pathname.startsWith('/estrella') && <IosInstallHint />}
     </div>
   )

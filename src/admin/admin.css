@@ -31,6 +31,16 @@
 .status.preparando { background: color-mix(in srgb, var(--gold) 20%, transparent); color: var(--gold); }
 .status.entregado { background: color-mix(in srgb, var(--ok) 20%, transparent); color: var(--ok); }
 .status.cancelado { background: color-mix(in srgb, var(--danger) 20%, transparent); color: var(--danger); }
+.status.en_camino { background: color-mix(in srgb, #4aa3ff 22%, transparent); color: #6cb6ff; }
+.status.r-pendiente { background: color-mix(in srgb, var(--amber) 25%, transparent); color: var(--amber); }
+.status.r-confirmada, .status.r-completada { background: color-mix(in srgb, var(--ok) 20%, transparent); color: var(--ok); }
+.status.r-rechazada, .status.r-cancelada { background: color-mix(in srgb, var(--danger) 20%, transparent); color: var(--danger); }
+.live-badge { display: inline-block; vertical-align: 3px; margin-inline-start: 6px; padding: 2px 8px; border-radius: 99px; font-size: 10px; letter-spacing: 0.08em; background: color-mix(in srgb, var(--ok) 20%, transparent); color: var(--ok); }
+.sound-off { animation: blink 1.4s ease-in-out infinite; }
+@keyframes blink { 50% { opacity: 0.55; } }
+.order-editor { margin: 10px 0; padding: 12px; border-radius: 14px; background: var(--surface-2); border: 1px dashed var(--border); }
+.edit-line { display: flex; align-items: center; gap: 6px; padding: 6px 0; font-size: 14px; border-bottom: 1px solid var(--border); }
+.edit-line .grow, .order-editor .grow { flex: 1; min-width: 0; }
 .order.is-new { border-color: var(--amber); box-shadow: 0 0 0 2px color-mix(in srgb, var(--amber) 30%, transparent); }
 
 .list-item { display: flex; align-items: center; gap: 12px; padding: 12px 14px; }

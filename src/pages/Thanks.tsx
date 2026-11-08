@@ -1,5 +1,5 @@
 import { motion } from 'motion/react'
-import { useEffect } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Icon } from '../components/Icon'
 import { TopBar } from '../components/TopBar'
@@ -7,10 +7,12 @@ import { useAppData } from '../context/AppData'
 import { useI18n } from '../i18n/I18n'
 import { fireworks } from '../lib/celebrate'
 import { formatCOP } from '../lib/format'
-import type { OrderSummary } from '../lib/types'
+import { renderTicket } from '../lib/ticket'
+import type { Customer, OrderSummary } from '../lib/types'
+import { orderText } from '../lib/whatsapp'
 import { LAST_ORDER_KEY } from './Cart'
 
-function readLast(): { order: OrderSummary; url: string } | null {
+function readLast(): { order: OrderSummary; url: string; customer?: Customer } | null {
   try {
     const raw = sessionStorage.getItem(LAST_ORDER_KEY)
     return raw ? JSON.parse(raw) : null
@@ -19,11 +21,38 @@ function readLast(): { order: OrderSummary; url: string } | null {
   }
 }
 
+/** Imagen PNG del ticket con botones para descargarla o compartirla (WhatsApp, etc.). */
+function Ticket({ order, customer }: { order: OrderSummary; customer: Customer }) {
+  const { t, lang } = useI18n()
+  const [blob, setBlob] = useState<Blob | null>(null)
+  const url = useMemo(() => (blob ? URL.createObjectURL(blob) : null), [blob])
+  useEffect(() => { void renderTicket(order, customer).then(setBlob).catch(() => {}) }, [order, customer])
+  useEffect(() => () => { if (url) URL.revokeObjectURL(url) }, [url])
+  if (!blob || !url) return null
+  const file = new File([blob], `ambar-pedido-${order.number}.png`, { type: 'image/png' })
+  const canShare = typeof navigator !== 'undefined' && !!navigator.canShare?.({ files: [file] })
+  return (
+    <section className="section">
+      <div className="section-title"><h2>{t('thanks.ticket')}</h2></div>
+      <motion.img className="ticket-img" src={url} alt={t('thanks.ticket')} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} />
+      <div style={{ display: 'flex', gap: 10, marginTop: 12, flexWrap: 'wrap' }}>
+        <a className="btn" href={url} download={file.name}><Icon name="download" /> {t('thanks.download')}</a>
+        {canShare && (
+          <button className="btn" onClick={() => void navigator.share({ files: [file], text: orderText(order, customer, lang) }).catch(() => {})}>
+            <Icon name="share" /> {t('thanks.share')}
+          </button>
+        )}
+      </div>
+      <p className="muted" style={{ fontSize: 12 }}>{t('thanks.shareHint')}</p>
+    </section>
+  )
+}
+
 export default function Thanks() {
   const { data } = useAppData()
   const { t } = useI18n()
-  const last = readLast()
-  useEffect(() => { if (last) fireworks(1200) }, [])
+  const [last] = useState(readLast)
+  useEffect(() => { if (last) fireworks(1200) }, [last])
 
   const contact = data?.settings.contact
   const reviews = [
@@ -49,12 +78,26 @@ export default function Thanks() {
               <br />{t('thanks.noWhatsapp')}
             </p>
           )}
+          {last?.order.star_awarded && (
+            <motion.p
+              className="star-earned"
+              initial={{ scale: 0.6, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ delay: 0.5, type: 'spring', stiffness: 300, damping: 15 }}
+            >
+              ⭐ {t('thanks.star', { n: last.order.stars ?? 1 })}
+            </motion.p>
+          )}
         </motion.div>
 
         {last && (
           <motion.a className="btn solid block" style={{ height: 54 }} href={last.url} target="_blank" rel="noreferrer" whileTap={{ scale: 0.96 }}>
             <Icon name="whatsapp" /> {t('thanks.sendWhatsapp')}
           </motion.a>
+        )}
+        {last?.customer && <Ticket order={last.order} customer={last.customer} />}
+        {last?.customer && (
+          <Link to="/cuenta" className="btn block" style={{ marginTop: 14 }}><Icon name="receipt" /> {t('thanks.track')}</Link>
         )}
 
         <section className="section">
