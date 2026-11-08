@@ -44,6 +44,8 @@ fieldset.yesno legend { font-size: 13px; color: var(--muted); font-weight: 600; 
 .draft-banner { display: flex; align-items: center; gap: 10px; padding: 12px 14px; margin-top: 14px; font-size: 14px; font-weight: 600; border-color: var(--gold); background: color-mix(in srgb, var(--gold) 10%, var(--surface)); }
 .draft-banner svg { width: 20px; height: 20px; color: var(--gold); flex-shrink: 0; }
 
+.star-earned { display: inline-block; margin: 8px 0 0; padding: 8px 16px; border-radius: 999px; font-weight: 800; font-size: 14px; color: #141414; background: linear-gradient(135deg, var(--gold), var(--amber)); }
+
 /* Ticket */
 .ticket-img { display: block; width: 100%; max-width: 360px; margin: 0 auto; border-radius: 14px; box-shadow: var(--shadow); }
 

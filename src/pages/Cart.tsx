@@ -35,7 +35,7 @@ export function useReservationDraft(): ReservationDraft | null {
 export default function Cart() {
   const { items, setQty, remove, clear } = useCart()
   const { data, reload } = useAppData()
-  const { customer, token, logout } = useCustomer()
+  const { customer, token, logout, refresh } = useCustomer()
   const { t, lang, dir } = useI18n()
   const toast = useToast()
   const navigate = useNavigate()
@@ -82,6 +82,7 @@ export default function Cart() {
       try { sessionStorage.setItem(LAST_ORDER_KEY, JSON.stringify({ order, url, customer: c })) } catch { /* sin almacenamiento */ }
       if (win) win.location.href = url
       clear()
+      void refresh() // el pedido sumó una estrella a la Tarjeta Ámbar
       navigate('/gracias')
     } catch (e) {
       win?.close()

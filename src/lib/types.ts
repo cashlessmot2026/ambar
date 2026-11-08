@@ -135,6 +135,9 @@ export interface OrderSummary {
   lat?: number | null
   lng?: number | null
   updated_at?: string
+  /** Solo en la respuesta de place_order: el pedido sumó 1 estrella y el nuevo total. */
+  star_awarded?: boolean
+  stars?: number
 }
 
 export type ClaimResult =

@@ -78,6 +78,16 @@ export default function Thanks() {
               <br />{t('thanks.noWhatsapp')}
             </p>
           )}
+          {last?.order.star_awarded && (
+            <motion.p
+              className="star-earned"
+              initial={{ scale: 0.6, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ delay: 0.5, type: 'spring', stiffness: 300, damping: 15 }}
+            >
+              ⭐ {t('thanks.star', { n: last.order.stars ?? 1 })}
+            </motion.p>
+          )}
         </motion.div>
 
         {last && (

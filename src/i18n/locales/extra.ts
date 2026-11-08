@@ -108,6 +108,7 @@ export const extraEs = {
   'thanks.share': 'Compartir imagen',
   'thanks.shareHint': 'Comparte la imagen del ticket en el chat de WhatsApp de Ámbar si tu celular lo permite.',
   'thanks.track': 'Ver estado del pedido',
+  'thanks.star': '¡+1 estrella en tu Tarjeta Ámbar! Ahora tienes {n}.',
 
   'ai.button': 'Tu mesero IA',
   'ai.subtitle': 'Te ayudo a elegir lo mejor de la carta',
@@ -247,6 +248,7 @@ export const extraEn: Record<keyof typeof extraEs, string> = {
   'thanks.share': 'Share image',
   'thanks.shareHint': "Share the ticket image in Ámbar's WhatsApp chat if your phone allows it.",
   'thanks.track': 'Track your order',
+  'thanks.star': '+1 star on your Ámbar Card! You now have {n}.',
 
   'ai.button': 'Your AI waiter',
   'ai.subtitle': 'I help you pick the best of the menu',
