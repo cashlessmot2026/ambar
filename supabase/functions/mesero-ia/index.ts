@@ -6,8 +6,35 @@
 // Body: { messages: [{ role: 'user' | 'model', text }], cart: [{ product_id, qty }], lang }
 // Respuesta: { reply, products: [ids sugeridos], recommended: id del recomendado del día }
 import { createClient } from 'npm:@supabase/supabase-js@2.49.4'
-import { corsHeaders, json } from '../_shared/cors.ts'
-import { dailyPick } from '../_shared/recommend.ts'
+
+// Archivo autocontenido (sin imports locales) para poder pegarlo tal cual en el editor del dashboard.
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+}
+const json = (body: unknown, status = 200) =>
+  new Response(JSON.stringify(body), { status, headers: { ...corsHeaders, 'Content-Type': 'application/json; charset=utf-8' } })
+
+// <recommend> Copia exacta de src/lib/recommend.ts (un test verifica que sean iguales).
+export interface PricedProduct { id: string; price: number; name: string }
+
+export const POOL_SIZE = 5
+
+/** Días desde 1970 en la hora de Colombia (UTC-5, sin horario de verano). */
+export function bogotaDay(now: Date = new Date()): number {
+  return Math.floor((now.getTime() - 5 * 3600_000) / 86_400_000)
+}
+
+export function dailyPick<T extends PricedProduct>(products: T[], now: Date = new Date()): T | null {
+  const pool = [...products]
+    .filter((p) => p.price > 0)
+    .sort((a, b) => b.price - a.price || a.name.localeCompare(b.name))
+    .slice(0, POOL_SIZE)
+  if (!pool.length) return null
+  return pool[bogotaDay(now) % pool.length]
+}
+// </recommend>
 
 interface Product { id: string; name: string; description: string | null; price: number; featured: boolean }
 interface Category { name: string; products: Product[] }

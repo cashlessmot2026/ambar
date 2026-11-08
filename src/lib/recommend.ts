@@ -1,5 +1,5 @@
 // Recomendado del día: rota cada día entre los platos más costosos de la carta.
-// Copia exacta de supabase/functions/_shared/recommend.ts (la app y el Mesero IA deben elegir el mismo plato).
+// Copia exacta del bloque <recommend> de supabase/functions/mesero-ia/index.ts (la app y el Mesero IA deben elegir el mismo plato).
 export interface PricedProduct { id: string; price: number; name: string }
 
 export const POOL_SIZE = 5

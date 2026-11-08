@@ -34,7 +34,8 @@ describe('dailyPick', () => {
   it('la copia de la Edge Function es idéntica', () => {
     const strip = (s: string) => s.split('\n').filter((l) => !l.startsWith('//')).join('\n')
     const app = readFileSync('src/lib/recommend.ts', 'utf8')
-    const edge = readFileSync('supabase/functions/_shared/recommend.ts', 'utf8')
-    expect(strip(edge)).toBe(strip(app))
+    const fn = readFileSync('supabase/functions/mesero-ia/index.ts', 'utf8').replace(/\r\n/g, '\n')
+    const edge = fn.slice(fn.indexOf('// <recommend>'), fn.indexOf('// </recommend>'))
+    expect(strip(edge).trim()).toBe(strip(app.replace(/\r\n/g, '\n')).trim())
   })
 })

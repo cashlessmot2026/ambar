@@ -10,7 +10,15 @@
 //       { id, kind: 'confirmed', admin_token }   → lo llama el panel al aceptar la reserva
 import { createClient } from 'npm:@supabase/supabase-js@2.49.4'
 import nodemailer from 'npm:nodemailer@6.9.16'
-import { corsHeaders, json } from '../_shared/cors.ts'
+
+// Archivo autocontenido (sin imports locales) para poder pegarlo tal cual en el editor del dashboard.
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+}
+const json = (body: unknown, status = 200) =>
+  new Response(JSON.stringify(body), { status, headers: { ...corsHeaders, 'Content-Type': 'application/json; charset=utf-8' } })
 
 interface Dish { name: string; qty: number; price: number }
 interface Reservation {
